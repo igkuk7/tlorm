@@ -1,0 +1,39 @@
+<html>
+ <head>
+ <title>TLC</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=0" />
+  <style>
+    body, canvas {
+margin: 0;
+padding: 0;
+-webkit-touch-callout: none;
+-webkit-user-select: none;
+-khtml-user-select: none;
+-moz-user-select: none;
+-ms-user-select: none;
+-o-user-select: none;
+user-select: none;
+-webkit-tap-highlight-color: rgba(0,0,0,0);
+}
+  </style>
+  
+  <!-- From engine -->
+  <script type="text/javascript" src="../../src/TLORM.js"></script>
+  
+  <!-- Custom -->
+  <script type="text/javascript" src="TLC.js"></script>
+ </head>
+ <body>
+  <canvas id="tlorm_game_canvas"></canvas>
+  <button id="new_seed" onclick="">Again</button>
+  <span id="seed"></span>
+  <script>
+    var seed;
+    document.getElementById("new_seed").addEventListener("click", function() {
+      seed = Math.floor(Math.random()*1000);
+      document.getElementById("seed").innerHTML = seed;
+      start_game(seed);
+    });
+  </script>
+ </body>
+</html>

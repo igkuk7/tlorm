@@ -1,0 +1,60 @@
+{
+	w: 480,
+	h: 800,
+	start: 'main',
+	menus: {
+		main: {
+			title: 'Tubular',
+			background: '#CCE',
+			messages: [
+				'This is a message to show on the screen'
+			],
+			options: [
+				{ title: 'Start', destination: 'levels' },
+				{ title: 'Credits', destination: 'credits' }
+			]
+		},
+		credits: {
+			title: 'Credits',
+			background: '#CEC',
+			messages: [
+				'Made by Iain G. Kelly',
+				'Powered by TLORM'
+			],
+			options: [
+				{ title: 'Back', destination: 'main' }
+			]
+		},
+		levels: {
+			title: 'Levels',
+			background: '#ECC',
+			messages: [],
+			options: [
+				{ title: 'Random Easiest Level', destination: 'game', args: [ null, 5, 2 ] },
+				{ title: 'Level 3', destination: 'game', args: [ 'Level/3.txt' ] },
+				{ title: 'Random Easy Level', destination: 'game', args: [ null, 3, 3 ] },
+				{ title: 'Random Medium Level', destination: 'game', args: [ null, 4, 4 ] },
+				{ title: 'Random Hard Level', destination: 'game', args: [ null, 5, 5 ] },
+			]
+		},
+	},
+	game: function(game, level, rows, cols) {
+		var w = 80;
+		var h = 100;
+		
+		game.reset();
+		
+		var container;
+		if (level) {
+			container = TLORM.QuickEntity.Level(game, level, 0, 0, w, h);
+		} else {
+			container = TLORM.QuickEntity.RandomLevel(game, 0, 0, w, h, rows, cols);
+		}
+		game.setSize(container.w, container.h)
+		
+		game.system_manager.addSystem(new TLORM.System.UserInput());
+		game.system_manager.addSystem(new TLORM.System.Scoring());
+		game.system_manager.addSystem(new TLORM.System.RenderTubes(game.canvasContext(), container.w, container.h));
+		game.start();
+	}
+}
