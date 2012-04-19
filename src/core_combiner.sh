@@ -16,10 +16,22 @@ fi
 echo -e "\nvar TLORM = TLORM || {};" > $COMBINED_FILE.tmp
 
 # add top level files
-find . -name "*.js" | grep "TLORM/[^/]*.js" | xargs cat $1 >> $COMBINED_FILE.tmp
+for jsfile in `find . -maxdepth 1 -name "*.js"`
+do
+	echo "Combining file $jsfile"
+	echo -e "\n/*\n * $jsfile\n */\n" >> $COMBINED_FILE.tmp
+	cat $jsfile >> $COMBINED_FILE.tmp
+done
+#find . -name "*.js" | grep "TLORM/[^/]*.js" | xargs cat $1 >> $COMBINED_FILE.tmp
 
 # add rest of the files
-find . -name "*.js" | grep "TLORM/.*/.*.js" | xargs cat $1 >> $COMBINED_FILE.tmp
+for jsfile in `find . -mindepth 2 -name "*.js"`
+do
+	echo "Combining file $jsfile"
+	echo -e "\n/*\n * $jsfile\n */\n" >> $COMBINED_FILE.tmp
+	cat $jsfile >> $COMBINED_FILE.tmp
+done
+#find . -name "*.js" | grep "TLORM/.*/.*.js" | xargs cat $1 >> $COMBINED_FILE.tmp
 
 mv $COMBINED_FILE.tmp $COMBINED_FILE
 echo "Combined files into $COMBINED_FILE"

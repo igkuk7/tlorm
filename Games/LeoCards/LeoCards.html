@@ -4,6 +4,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=0" />
   <style>
     body, canvas {
+background: #000;
 margin: 0;
 padding: 0;
 -webkit-touch-callout: none;
@@ -24,6 +25,9 @@ user-select: none;
   <script type="text/javascript" src="LeoCards.js"></script>
  </head>
  <body>
+  <button onclick="window.location=window.location.pathname+'?type=letters&num=10'">Letters</button>
+  <button onclick="window.location=window.location.pathname+'?type=numbers&num=10'">Numbers</button>
+  <br />
   <canvas id="tlorm_game_canvas"></canvas>
  </body>
 </html>

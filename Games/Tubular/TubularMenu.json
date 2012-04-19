@@ -1,6 +1,6 @@
 {
 	w: 480,
-	h: 800,
+	h: 400,
 	start: 'main',
 	menus: {
 		main: {

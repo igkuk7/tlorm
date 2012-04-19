@@ -1,5 +1,407 @@
 
 var TLORM = TLORM || {};
+/*
+ * ./tmp.js
+ */
+
+var TLORM=TLORM||{};TLORM.Component={};TLORM.SystemManager=function(){this.next_id=1;this.systems=[];this.systems_by_type={};this.systems_by_id={}};TLORM.SystemManager.prototype.addSystem=function(a){a.id=this.next_id++;this.systems.push(a);this.systems_by_type[a.type]=a;this.systems_by_id[a.id]=a};TLORM.SystemManager.prototype.getSystems=function(){return this.systems};TLORM.SystemManager.prototype.initAllSystems=function(a){for(var b=0;b<this.systems.length;++b){if(this.systems[b].init){this.systems[b].init(a)}}};TLORM.SystemManager.prototype.updateAllSystems=function(a){for(var b=0;b<this.systems.length;++b){this.systems[b].update(a)}};TLORM.ResourceManager=function(){this.images={};this.files={};this.to_load=0};TLORM.ResourceManager.prototype.addImage=function(c){if(this.images[c]){return this.images[c].img}var b=new Image();++this.to_load;var a=this;b.onload=function(){--a.to_load;a.images[c].loaded=true};b.src=c+"?"+new Date().getTime();this.images[c]={img:b,loaded:false};return b};TLORM.ResourceManager.prototype.getImage=function(a){return this.images[a].img};TLORM.ResourceManager.prototype.loadFile=function(c){if(this.files[c]){return this.files[c].contents}++this.to_load;this.files[c]={contents:null,loaded:false};var b=this;var a=new XMLHttpRequest();a.onreadystatechange=function(){if(a.readyState===4){--b.to_load;b.files[c].contents=a.responseText;b.files[c].loaded=true}};a.open("GET",c+"?"+new Date().getTime(),false);a.send();return this.files[c].contents};TLORM.ResourceManager.prototype.getFile=function(a){return this.files[a].contents};TLORM.ResourceManager.prototype.allLoaded=function(a){return this.to_load===0};TLORM.QuickEntity={};TLORM.Entity=function(c,f,a,g,b,e){this.id=null;this.name=c;this.x=a;this.y=g;this.w=b;this.h=e;this.components=[];this.components_by_type={};if(f){for(var d=0;d<f.length;++d){this.addComponent(f[d])}}};TLORM.Entity.prototype.addComponent=function(a){this.components.push(a);this.components_by_type[a.type]=a};TLORM.Entity.prototype.removeComponent=function(a){for(var b=0;b<this.components.length;++b){if(this.components[b]===a){this.components.splice(b,1)}}delete this.components_by_type[a.type]};TLORM.Entity.prototype.getComponentByType=function(a){if(this.components_by_type[a]){return this.components_by_type[a]}return null};TLORM.Entity.prototype.initAllComponents=function(a){for(var b=0;b<this.components.length;++b){if(this.components[b].init){this.components[b].init(a)}}};TLORM.System={};TLORM.Game=function(b,a){this.name=b;this.canvas=a;this.context=this.canvas.getContext("2d");this.running=false;this.loop_time=33;this.stop_message="GAME OVER!";this.entity_manager=new TLORM.EntityManager();this.resource_manager=new TLORM.ResourceManager();this.system_manager=new TLORM.SystemManager()};TLORM.Game.prototype.reset=function(){this.entity_manager=new TLORM.EntityManager();this.resource_manager=new TLORM.ResourceManager();this.system_manager=new TLORM.SystemManager()};TLORM.Game.prototype.border=function(){return 10};TLORM.Game.prototype.canvasContext=function(){if(!this.buffer_context){this.buffer_canvas=document.createElement("canvas");this.buffer_canvas.width=this.canvas.width;this.buffer_canvas.height=this.canvas.height;this.buffer_context=this.buffer_canvas.getContext("2d")}return this.buffer_context};TLORM.Game.prototype.registerEvent=function(a,b){this.canvas.addEventListener(a,b)};TLORM.Game.prototype.start=function(){this.entity_manager.initAllEntities(this);this.system_manager.initAllSystems(this);this.startIfResourcesLoaded()};TLORM.Game.prototype.startIfResourcesLoaded=function(){if(!this.resource_manager.allLoaded(this)){var a=this;setTimeout(function(){a.startIfResourcesLoaded()},100)}else{this.running=true;this.loop()}};TLORM.Game.prototype.stop=function(){this.running=false;var a=this;setTimeout(function(){alert(a.stop_message)},this.loop_time)};TLORM.Game.prototype.gameOver=function(b,a){this.stop_message="GAME OVER!\n"+(b?"Congratulations, you won!":"Sorry, you lost!")+(a?" Your score was "+a:"");this.stop()};TLORM.Game.prototype.loop=function(){if(this.running){this.update();var a=this;setTimeout(function(){a.loop()},this.loop_time)}};TLORM.Game.prototype.update=function(){this.system_manager.updateAllSystems(this);this.context.clearRect(0,0,this.canvas.width,this.canvas.height);this.context.drawImage(this.buffer_canvas,0,0)};TLORM.EntityManager=function(){this.next_id=1;this.entities=[];this.entities_by_type={};this.entities_by_id={}};TLORM.EntityManager.prototype.addEntity=function(a){a.id=this.next_id++;this.entities.push(a);for(var b=0;b<a.components.length;++b){if(!this.entities_by_type[a.components[b].type]){this.entities_by_type[a.components[b].type]=[]}this.entities_by_type[a.components[b].type].push(a)}this.entities_by_id[a.id]=a;return a};TLORM.EntityManager.prototype.removeEntity=function(a){for(var d=0;d<this.entities.length;++d){if(this.entities[d]===a){this.entities.splice(d,1);break}}for(d=0;d<a.components.length;++d){var c=a.components[d];if(this.entities_by_type[c.type]){for(var b=0;b<this.entities_by_type[c.type].length;++b){if(this.entities_by_type[c.type][b]===a){this.entities_by_type[c.type].splice(b,1);break}}}}if(this.entities_by_id[a.id]){delete this.entities_by_id[a.id]}};TLORM.EntityManager.prototype.getEntities=function(){return this.entities};TLORM.EntityManager.prototype.getEntitiesByType=function(a){if(this.entities_by_type[a]){return this.entities_by_type[a]}return[]};TLORM.EntityManager.prototype.getEntitiesByPosition=function(a,d){var c=[];for(var b=0;b<this.entities.length;b++){if(this.entities[b].x===a&&this.entities[b].y===d){c.push(this.entities[b])}}return c};TLORM.EntityManager.prototype.addEntityComponent=function(a,b){if(this.entities_by_id[a.id]){a.addComponent(b);if(!this.entities_by_type[b.type]){this.entities_by_type[b.type]=[]}this.entities_by_type[b.type].push(a)}};TLORM.EntityManager.prototype.removeEntityComponent=function(a,b){if(this.entities_by_id[a.id]){a.removeComponent(b);for(var c=0;c<this.entities_by_type[b.type].length;++c){if(this.entities_by_type[b.type][c]===a){this.entities_by_type[b.type].splice(c,1);break}}}};TLORM.EntityManager.prototype.initAllEntities=function(a){for(var b=0;b<this.entities.length;++b){this.entities[b].initAllComponents(a)}};TLORM.System.Debug=function(a){return{type:"Debug",component_types:a,update:function(b){var d=[];if(!this.component_types){d=b.entity_manager.getEntities()}for(var c=0;c<d.length;++c){console.log("Entity: "+d[c].name)}}}};TLORM.Component.Render=function(d,b,c,a){return{type:"Render",z:d,highlight_alpha:a,fill_colour:b,stroke_colour:c,show_name:false}};TLORM.Component.Sprite=function(a,f,e,g,c,j,i,b,d){return{type:"Sprite",src:a,x:f,y:e,w:g,h:c,dx:j,dy:i,dw:b,dh:d,img:null,init:function(h){this.img=h.resource_manager.addImage(this.src)}}};/*
+ * ./TLORM/System.js
+ */
+
+
+/* store all systems inside this object */
+TLORM.System = {
+};/*
+ * ./TLORM/EntityManager.js
+ */
+
+
+TLORM.EntityManager = function() {
+	this.next_id = 1;
+	this.entities = [];
+	this.entities_by_type = {};
+	this.entities_by_id = {};
+};
+
+TLORM.EntityManager.prototype.addEntity = function(entity) {
+	entity.id = this.next_id++;
+	
+	this.entities.push(entity);
+	
+	for (var i=0; i<entity.components.length; ++i) {
+		if (!this.entities_by_type[entity.components[i].type]) {
+			this.entities_by_type[entity.components[i].type] = [];
+		}
+		this.entities_by_type[entity.components[i].type].push(entity);
+	}
+	
+	this.entities_by_id[entity.id] = entity;
+	
+	return entity;
+};
+
+TLORM.EntityManager.prototype.removeEntity = function(entity) {
+	for (var i=0; i<this.entities.length; ++i) {
+		if (this.entities[i] === entity) {
+			this.entities.splice(i, 1);
+			break;
+		}
+	}
+
+	for (i=0; i<entity.components.length; ++i) {
+		var component = entity.components[i];
+		if (this.entities_by_type[component.type]) {
+			for (var j=0; j<this.entities_by_type[component.type].length; ++j) {
+				if (this.entities_by_type[component.type][j] === entity) {
+					this.entities_by_type[component.type].splice(j, 1);
+					break;
+				}
+			}
+		}
+	}
+	
+	if (this.entities_by_id[entity.id]) {
+		delete this.entities_by_id[entity.id];
+	}
+};
+
+TLORM.EntityManager.prototype.getEntities = function() {
+	return this.entities;
+};
+
+TLORM.EntityManager.prototype.getEntitiesByType = function(type) {
+	if (this.entities_by_type[type]) {
+		return this.entities_by_type[type];
+	}
+	
+	return [];
+};
+
+TLORM.EntityManager.prototype.getEntitiesByPosition= function(x,y) {
+	var entities = [];
+	for (var i = 0; i<this.entities.length; i++) {
+		if (this.entities[i].x === x && this.entities[i].y === y) {
+			entities.push(this.entities[i]);
+		}
+	}
+	
+	return entities;
+};
+
+TLORM.EntityManager.prototype.addEntityComponent = function(entity, component) {
+	if (this.entities_by_id[entity.id]) {
+		var c = entity.getComponentByType(component.type);
+		if (c) {
+			this.removeEntityComponent(entity, c);
+		}
+		entity.addComponent(component);
+		if (!this.entities_by_type[component.type]) {
+			this.entities_by_type[component.type] = [];
+		}
+		this.entities_by_type[component.type].push(entity);
+	}
+};
+
+TLORM.EntityManager.prototype.removeEntityComponent = function(entity, component) {
+	if (this.entities_by_id[entity.id]) {
+		entity.removeComponent(component);
+
+		for (var i=0; i<this.entities_by_type[component.type].length; ++i) {
+			if (this.entities_by_type[component.type][i] === entity) {
+				this.entities_by_type[component.type].splice(i, 1);
+				break;
+			}
+		}
+	}
+};
+
+TLORM.EntityManager.prototype.initAllEntities = function(game) {
+	for (var i=0; i<this.entities.length; ++i) {
+		this.entities[i].initAllComponents(game);
+	}
+};
+
+TLORM.EntityManager.prototype.getRequiredSystems = function() {
+	var systems = [];
+	for (var i=0; i<this.entities.length; ++i) {
+		systems = systems.concat(this.entities[i].getRequiredSystems());
+	}
+	return systems;
+};
+
+
+/*
+ * ./TLORM/System/Debug.js
+ */
+
+
+
+TLORM.System.Debug = function(component_types) {
+	return {
+		type: 'Debug',
+		component_types : component_types ,
+		update: function(game) {
+			
+			/* debug info on all entities that have all the required component types, or all */
+			var entities = [];
+			if (!this.component_types) {
+				entities = game.entity_manager.getEntities();
+			}
+			
+
+			for (var i=0; i<entities.length; ++i) {
+				console.log("Entity: "+entities[i].name);
+			}
+		}
+	};
+};/*
+ * ./TLORM/System/Transformation.js
+ */
+
+
+
+TLORM.System.Transformation = function(component_types) {
+	return {
+		type: 'Transformation',
+		update: function(game) {
+			
+			var entities = this.getTransforms(game);
+			for (var i=0; i<entities.length; ++i) {
+				var entity = entities[i];
+				var transform = entity.getComponentByType('Transform');
+				
+				if (transform.dx != null) {
+					entity.x += transform.dx;
+				}
+				if (transform.dy != null) {
+					entity.y += transform.dy;
+				}
+				if (transform.x != null) {
+					entity.x = transform.x;
+				}
+				if (transform.y != null) {
+					entity.y = transform.y;
+				}
+				if (transform.dw != null) {
+					entity.w += transform.dw;
+				}
+				if (transform.dh != null) {
+					entity.h += transform.dh;
+				}
+				if (transform.w != null) {
+					entity.w = transform.w;
+				}
+				if (transform.h != null) {
+					entity.h = transform.h;
+				}
+				
+				game.entity_manager.removeEntityComponent(entity, transform);
+			}
+		},
+		getTransforms: function(game) {
+			return game.entity_manager.getEntitiesByType('Transform');
+		}
+	};
+};/*
+ * ./TLORM/System/Animation.js
+ */
+
+
+
+TLORM.System.Animation = function(component_types) {
+	return {
+		type: 'Animation',
+		update: function(game) {
+			
+			var entities = this.getAnimations(game);
+			for (var i=0; i<entities.length; ++i) {
+				var entity = entities[i];
+				var animation = entity.getComponentByType('Animation');
+				
+				if (animation.step == 0) {
+					animation.on_start(animation);
+					++animation.step;
+				} else if (animation.step >= animation.steps) {
+					animation.on_end(animation);
+					game.entity_manager.removeEntityComponent(entity, animation);
+				} else {
+					animation.on_step(animation, animation.step);
+					++animation.step;
+				}
+			}
+		},
+		getAnimations: function(game) {
+			return game.entity_manager.getEntitiesByType('Animation');
+		}
+	};
+};/*
+ * ./TLORM/Component.js
+ */
+
+
+
+/* store all components inside this object */
+TLORM.Component = {};/*
+ * ./TLORM/GameMenu.js
+ */
+
+
+TLORM.GameMenu = function(game, menus_def_file) {
+	this.game = game;
+	this.context = this.game.canvasContext();
+	
+	/* load the game menu definition */
+	this.menus_def = game.resource_manager.loadJSON(menus_def_file);
+	this.w = this.menus_def.w;
+	this.h = this.menus_def.h;
+	
+	/* grab function to start the game */
+	this.start_game = this.menus_def.game;
+
+	/* parse the menus, add extra details needed for display */
+	this.menus = {};
+	for (var menu in this.menus_def.menus) {
+		var menu_def = this.menus_def.menus[menu];
+		this.menus[menu] = menu_def;
+	}
+	
+	/* setup handlers to track user input */
+	this.option_position = {
+		x: 30,
+		y: this.h/2,
+		w: this.w - 60,
+		h: 30,
+		dh: 20,
+		label_x: this.w/2,
+		label_dy: 23
+	};
+	
+	/* reset the menus */
+	this.reset();
+};
+
+TLORM.GameMenu.prototype.reset = function() {
+	this.current_menu = this.menus_def.start;
+	this.current_option_args = [];
+	this.game.setSize(this.w, this.h);
+	
+	var game_menu = this;
+	this.game.unregisterAllEvents();
+	this.game.registerEvent("click",  function(event) { game_menu.clickHandler(event); } );
+	this.game.registerEvent("touch",  function(event) { game_menu.clickHandler(event); } );
+};
+
+TLORM.GameMenu.prototype.show = function() {
+	if (this.current_menu == 'game') {
+		/* unregister listeners */
+		this.game.unregisterAllEvents();
+		
+		/* time to start the game */
+		var args = this.current_option_args.slice();
+		args.unshift(this.game);
+		this.start_game.apply(this.start_game, args);
+	} else {
+		/* otherwise display the menu */
+		this.display(this.current_menu);
+		this.game.update();
+	}
+};
+
+TLORM.GameMenu.prototype.display = function(menu) {
+	/* draw current page and setup handlers to parse user input */
+	var menu_def = this.menus[menu];
+	this.context.fillStyle = menu_def.background;
+	this.context.fillRect(0, 0, this.w, this.h);
+	
+	/* show title */
+	this.context.fillStyle = '#000';
+	this.context.font = '30px Arial';
+	this.context.textAlign = 'center';
+	this.context.fillText(menu_def.title, this.w/2, 30);
+	
+	/* show messages */
+	this.context.font = '20px Arial';
+	for (var i=0; i<menu_def.messages.length; ++i) {
+		var y = 60+(30*i);
+		this.context.fillText(menu_def.messages[i], this.w/2, y);
+	}
+	
+	/* show options */
+	this.context.font = '20px Arial';
+	this.context.textAlign = 'center';
+	this.context.strokeStyle = '#000';
+	for (var i=0; i<menu_def.options.length; ++i) {
+		var y = this.option_position.y+((this.option_position.h+this.option_position.dh)*i);
+		this.context.fillStyle = '#ABC';
+		this.context.fillRect(this.option_position.x, y, this.option_position.w, this.option_position.h);
+		this.context.strokeRect(this.option_position.x, y, this.option_position.w, this.option_position.h);
+		this.context.fillStyle = '#000';
+		this.context.fillText(menu_def.options[i].title, this.option_position.label_x, y+this.option_position.label_dy);
+	}
+};
+
+TLORM.GameMenu.prototype.clickHandler = function(event) {
+	var current_options = this.menus[this.current_menu].options;
+	if (   this.option_position.x <= event.offsetX && event.offsetX <= this.option_position.x + this.option_position.w
+	    && this.option_position.y <= event.offsetY && event.offsetY <= this.option_position.y + ((this.option_position.h+this.option_position.dh)*current_options.length)
+	) {
+		var position = Math.floor((event.offsetY-this.option_position.y)/(this.option_position.h+this.option_position.dh));
+		
+		/* ignore the spaces between */
+		if (event.offsetY <= this.option_position.y + ((this.option_position.h+this.option_position.dh)*position) + this.option_position.h) {
+			this.current_menu = current_options[position].destination;
+			this.current_option_args = current_options[position].args;
+			this.show();
+		}
+	}
+};
+
+/*
+ * ./TLORM/SystemManager.js
+ */
+
+
+TLORM.SystemManager = function() {
+	this.next_id = 1;
+	this.systems = [];
+	this.systems_by_type = {};
+	this.systems_by_id = {};
+};
+
+TLORM.SystemManager.prototype.getSystemByType = function(type) {
+	return this.systems_by_type[type];
+};
+
+TLORM.SystemManager.prototype.addSystem = function(system) {
+	system.id = this.next_id++;
+	this.systems.push(system);
+	this.systems_by_type[system.type] = system;
+	this.systems_by_id[system.id] = system;
+};
+
+TLORM.SystemManager.prototype.getSystems = function() {
+	return this.systems;
+};
+
+TLORM.SystemManager.prototype.initAllSystems = function(game) {
+	for (var i=0; i<this.systems.length; ++i) {
+		if (this.systems[i].init) {
+			this.systems[i].init(game);
+		}
+	}
+};
+
+TLORM.SystemManager.prototype.updateAllSystems = function(game) {
+	for (var i=0; i<this.systems.length; ++i) {
+		this.systems[i].update(game);
+	}
+};
+
+
+/*
+ * ./TLORM/seedrandom.js
+ */
+
 // seedrandom.js version 2.0.
 // Author: David Bau 4/2/2011
 //
@@ -272,248 +674,9 @@ mixkey(math.random(), pool);
   6,    // chunks: at least six RC4 outputs for each double
   52    // significance: there are 52 significant digits in a double
 );
-
-
-/* store all components inside this object */
-TLORM.Component = {};
-TLORM.SystemManager = function() {
-	this.next_id = 1;
-	this.systems = [];
-	this.systems_by_type = {};
-	this.systems_by_id = {};
-};
-
-TLORM.SystemManager.prototype.getSystemByType = function(type) {
-	return this.systems_by_type[type];
-};
-
-TLORM.SystemManager.prototype.addSystem = function(system) {
-	system.id = this.next_id++;
-	this.systems.push(system);
-	this.systems_by_type[system.type] = system;
-	this.systems_by_id[system.id] = system;
-};
-
-TLORM.SystemManager.prototype.getSystems = function() {
-	return this.systems;
-};
-
-TLORM.SystemManager.prototype.initAllSystems = function(game) {
-	for (var i=0; i<this.systems.length; ++i) {
-		if (this.systems[i].init) {
-			this.systems[i].init(game);
-		}
-	}
-};
-
-TLORM.SystemManager.prototype.updateAllSystems = function(game) {
-	for (var i=0; i<this.systems.length; ++i) {
-		this.systems[i].update(game);
-	}
-};
-
-
-
-TLORM.ResourceManager = function() {
-	this.images = {};
-	this.files = {};
-	this.json = {};
-	this.to_load = 0;
-};
-
-TLORM.ResourceManager.prototype.addImage = function(src) {
-	if (this.images[src]) {
-		return this.images[src].img;
-	}
-	var image = new Image();
-	++this.to_load;
-	var rm = this;
-	image.onload = function() {
-		--rm.to_load;
-		rm.images[src].loaded = true;
-	};
-	image.src = src + "?" + new Date().getTime();
-	
-	this.images[src] = { img: image, loaded: false };
-	return image;
-};
-
-TLORM.ResourceManager.prototype.getImage = function(src) {
-	return this.images[src].img;
-};
-
-TLORM.ResourceManager.prototype.loadFile = function(src) {
-	if (this.files[src]) {
-		return this.files[src].contents;
-	}
-	
-	++this.to_load;
-	this.files[src] = { contents: null, loaded: false };
-	var rm = this;
-	
-	/* load file synchronously */
-	var ajax = new XMLHttpRequest();
-	ajax.onreadystatechange = function() {
-		if (ajax.readyState === 4) {
-			--rm.to_load;
-			rm.files[src].contents = ajax.responseText;
-			rm.files[src].loaded = true;
-		}
-	};
-	ajax.open('GET', src + "?" + new Date().getTime(), false);
-	ajax.send();
-	
-	return this.files[src].contents;
-};
-
-TLORM.ResourceManager.prototype.getFile = function(src) {
-	return this.files[src].contents;
-};
-
-TLORM.ResourceManager.prototype.loadJSON = function(src) {
-	if (this.json[src]) {
-		return this.json[src].contents;
-	}
-	
-	++this.to_load;
-	this.json[src] = { contents: null, loaded: false };
-	var rm = this;
-	
-	/* load file synchronously */
-	var ajax = new XMLHttpRequest();
-	ajax.onreadystatechange = function() {
-		if (ajax.readyState === 4) {
-			--rm.to_load;
-			rm.json[src].contents = eval("("+ajax.responseText+")");
-			rm.json[src].loaded = true;
-		}
-	};
-	ajax.open('GET', src + "?" + new Date().getTime(), false);
-	ajax.send();
-	
-	return this.json[src].contents;
-};
-
-TLORM.ResourceManager.prototype.getJSON = function(src) {
-	return this.json[src].contents;
-};
-
-TLORM.ResourceManager.prototype.allLoaded = function(game) {
-	return this.to_load === 0;
-};
-
-
-
-
-TLORM.GameMenu = function(game, menus_def_file) {
-	this.game = game;
-	this.context = this.game.canvasContext();
-	
-	/* load the game menu definition */
-	this.menus_def = game.resource_manager.loadJSON(menus_def_file);
-	this.w = this.menus_def.w;
-	this.h = this.menus_def.h;
-	
-	/* grab function to start the game */
-	this.start_game = this.menus_def.game;
-
-	/* parse the menus, add extra details needed for display */
-	this.menus = {};
-	for (var menu in this.menus_def.menus) {
-		var menu_def = this.menus_def.menus[menu];
-		this.menus[menu] = menu_def;
-	}
-	
-	/* setup handlers to track user input */
-	this.option_position = {
-		x: 30,
-		y: this.h/2,
-		w: this.w - 60,
-		h: 30,
-		dh: 20,
-		label_x: this.w/2,
-		label_dy: 23
-	};
-	
-	/* reset the menus */
-	this.reset();
-};
-
-TLORM.GameMenu.prototype.reset = function() {
-	this.current_menu = this.menus_def.start;
-	this.current_option_args = [];
-	this.game.setSize(this.w, this.h);
-	
-	var game_menu = this;
-	this.game.unregisterAllEvents();
-	this.game.registerEvent("click",  function(event) { game_menu.clickHandler(event); } );
-	this.game.registerEvent("touch",  function(event) { game_menu.clickHandler(event); } );
-};
-
-TLORM.GameMenu.prototype.show = function() {
-	if (this.current_menu == 'game') {
-		/* unregister listeners */
-		this.game.unregisterAllEvents();
-		
-		/* time to start the game */
-		var args = this.current_option_args.slice();
-		args.unshift(this.game);
-		this.start_game.apply(this.start_game, args);
-	} else {
-		/* otherwise display the menu */
-		this.display(this.current_menu);
-		this.game.update();
-	}
-};
-
-TLORM.GameMenu.prototype.display = function(menu) {
-	/* draw current page and setup handlers to parse user input */
-	var menu_def = this.menus[menu];
-	this.context.fillStyle = menu_def.background;
-	this.context.fillRect(0, 0, this.w, this.h);
-	
-	/* show title */
-	this.context.fillStyle = '#000';
-	this.context.font = '30px Arial';
-	this.context.textAlign = 'center';
-	this.context.fillText(menu_def.title, this.w/2, 30);
-	
-	/* show messages */
-	this.context.font = '20px Arial';
-	for (var i=0; i<menu_def.messages.length; ++i) {
-		var y = 60+(30*i);
-		this.context.fillText(menu_def.messages[i], this.w/2, y);
-	}
-	
-	/* show options */
-	this.context.font = '20px Arial';
-	this.context.textAlign = 'center';
-	this.context.strokeStyle = '#000';
-	for (var i=0; i<menu_def.options.length; ++i) {
-		var y = this.option_position.y+((this.option_position.h+this.option_position.dh)*i);
-		this.context.fillStyle = '#ABC';
-		this.context.fillRect(this.option_position.x, y, this.option_position.w, this.option_position.h);
-		this.context.strokeRect(this.option_position.x, y, this.option_position.w, this.option_position.h);
-		this.context.fillStyle = '#000';
-		this.context.fillText(menu_def.options[i].title, this.option_position.label_x, y+this.option_position.label_dy);
-	}
-};
-
-TLORM.GameMenu.prototype.clickHandler = function(event) {
-	var current_options = this.menus[this.current_menu].options;
-	if (   this.option_position.x <= event.offsetX && event.offsetX <= this.option_position.x + this.option_position.w
-	    && this.option_position.y <= event.offsetY && event.offsetY <= this.option_position.y + ((this.option_position.h+this.option_position.dh)*current_options.length)
-	) {
-		var position = Math.floor((event.offsetY-this.option_position.y)/(this.option_position.h+this.option_position.dh));
-		
-		/* ignore the spaces between */
-		if (event.offsetY <= this.option_position.y + ((this.option_position.h+this.option_position.dh)*position) + this.option_position.h) {
-			this.current_menu = current_options[position].destination;
-			this.current_option_args = current_options[position].args;
-			this.show();
-		}
-	}
-};
+/*
+ * ./TLORM/Entity.js
+ */
 
 
 /* store all quick, predefined  entities in here */
@@ -586,10 +749,102 @@ TLORM.Entity.prototype.getRequiredSystems = function() {
 		}
 	}
 	return systems;
+};/*
+ * ./TLORM/Component/Render3D.js
+ */
+
+
+
+TLORM.Component.Render3D = function(z, fill_colour, stroke_colour, highlight_alpha, other_fill_colour) {
+	return {
+		type: 'Render3D',
+		z: z,
+		highlight_alpha: highlight_alpha,
+		fill_colour: fill_colour,
+		other_fill_colour: other_fill_colour,
+		stroke_colour: stroke_colour,
+		show_name: false
+	};
+};/*
+ * ./TLORM/Component/Sprite.js
+ */
+
+
+
+TLORM.Component.Sprite = function(src, x, y, w, h, dx, dy, dw, dh) {
+	return {
+		type: 'Sprite',
+		src: src,
+		x: x,
+		y: y,
+		w: w,
+		h: h,
+		dx: dx || 1,
+		dy: dy || 1,
+		dw: dw || 1,
+		dh: dh || 1,
+		img: null,
+		init: function(game) {
+			this.img = game.resource_manager.addImage(this.src);
+		}
+	};
 };
-/* store all systems inside this object */
-TLORM.System = {
-};
+/*
+ * ./TLORM/Component/Transform.js
+ */
+
+
+
+TLORM.Component.Transform = function(dx, dy, dw, dh, x, y, w ,h) {
+	return {
+		type: 'Transform',
+		system: 'Transformation',
+		dx: dx,
+		dy: dy,
+		dw: dw,
+		dh: dh,
+		x: x,
+		y: y,
+		w: w,
+		h: h
+	};
+};/*
+ * ./TLORM/Component/Animation.js
+ */
+
+
+
+TLORM.Component.Animation = function(steps, on_start, on_step, on_end) {
+	return {
+		type: 'Animation',
+		system: 'Animation',
+		on_start: on_start,
+		on_step: on_step,
+		on_end: on_end,
+		step: 0,
+		steps: steps
+	};
+};/*
+ * ./TLORM/Component/Render.js
+ */
+
+
+
+TLORM.Component.Render = function(z, fill_colour, stroke_colour, highlight_alpha, other_fill_colour) {
+	return {
+		type: 'Render',
+		z: z,
+		highlight_alpha: highlight_alpha,
+		fill_colour: fill_colour,
+		other_fill_colour: other_fill_colour,
+		stroke_colour: stroke_colour,
+		show_name: false
+	};
+};/*
+ * ./TLORM/Game.js
+ */
+
+
 TLORM.Game = function(name, canvas) {
 	this.name = name;
 	this.canvas = canvas;
@@ -713,7 +968,7 @@ TLORM.Game.prototype.stop = function(show_message) {
 
 TLORM.Game.prototype.gameOver = function(won, score) {
 	this.stop_message = "GAME OVER!\n"+(won ? "Congratulations, you won!" : "Sorry, you lost!")+(score ? " Your score was "+score : "");
-	this.stop();
+	this.stop(true);
 };
 
 TLORM.Game.prototype.loop = function() {
@@ -731,265 +986,98 @@ TLORM.Game.prototype.update = function() {
 	this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 	this.context.drawImage(this.buffer_canvas, 0, 0);
 };
+/*
+ * ./TLORM/ResourceManager.js
+ */
 
-TLORM.EntityManager = function() {
-	this.next_id = 1;
-	this.entities = [];
-	this.entities_by_type = {};
-	this.entities_by_id = {};
+
+TLORM.ResourceManager = function() {
+	this.images = {};
+	this.files = {};
+	this.json = {};
+	this.to_load = 0;
 };
 
-TLORM.EntityManager.prototype.addEntity = function(entity) {
-	entity.id = this.next_id++;
-	
-	this.entities.push(entity);
-	
-	for (var i=0; i<entity.components.length; ++i) {
-		if (!this.entities_by_type[entity.components[i].type]) {
-			this.entities_by_type[entity.components[i].type] = [];
-		}
-		this.entities_by_type[entity.components[i].type].push(entity);
+TLORM.ResourceManager.prototype.addImage = function(src) {
+	if (this.images[src]) {
+		return this.images[src].img;
 	}
+	var image = new Image();
+	++this.to_load;
+	var rm = this;
+	image.onload = function() {
+		--rm.to_load;
+		rm.images[src].loaded = true;
+	};
+	image.src = src + "?" + new Date().getTime();
 	
-	this.entities_by_id[entity.id] = entity;
-	
-	return entity;
+	this.images[src] = { img: image, loaded: false };
+	return image;
 };
 
-TLORM.EntityManager.prototype.removeEntity = function(entity) {
-	for (var i=0; i<this.entities.length; ++i) {
-		if (this.entities[i] === entity) {
-			this.entities.splice(i, 1);
-			break;
-		}
-	}
+TLORM.ResourceManager.prototype.getImage = function(src) {
+	return this.images[src].img;
+};
 
-	for (i=0; i<entity.components.length; ++i) {
-		var component = entity.components[i];
-		if (this.entities_by_type[component.type]) {
-			for (var j=0; j<this.entities_by_type[component.type].length; ++j) {
-				if (this.entities_by_type[component.type][j] === entity) {
-					this.entities_by_type[component.type].splice(j, 1);
-					break;
-				}
-			}
-		}
+TLORM.ResourceManager.prototype.loadFile = function(src) {
+	if (this.files[src]) {
+		return this.files[src].contents;
 	}
 	
-	if (this.entities_by_id[entity.id]) {
-		delete this.entities_by_id[entity.id];
-	}
+	++this.to_load;
+	this.files[src] = { contents: null, loaded: false };
+	var rm = this;
+	
+	/* load file synchronously */
+	var ajax = new XMLHttpRequest();
+	ajax.onreadystatechange = function() {
+		if (ajax.readyState === 4) {
+			--rm.to_load;
+			rm.files[src].contents = ajax.responseText;
+			rm.files[src].loaded = true;
+		}
+	};
+	ajax.open('GET', src + "?" + new Date().getTime(), false);
+	ajax.send();
+	
+	return this.files[src].contents;
 };
 
-TLORM.EntityManager.prototype.getEntities = function() {
-	return this.entities;
+TLORM.ResourceManager.prototype.getFile = function(src) {
+	return this.files[src].contents;
 };
 
-TLORM.EntityManager.prototype.getEntitiesByType = function(type) {
-	if (this.entities_by_type[type]) {
-		return this.entities_by_type[type];
+TLORM.ResourceManager.prototype.loadJSON = function(src) {
+	if (this.json[src]) {
+		return this.json[src].contents;
 	}
 	
-	return [];
-};
-
-TLORM.EntityManager.prototype.getEntitiesByPosition= function(x,y) {
-	var entities = [];
-	for (var i = 0; i<this.entities.length; i++) {
-		if (this.entities[i].x === x && this.entities[i].y === y) {
-			entities.push(this.entities[i]);
-		}
-	}
+	++this.to_load;
+	this.json[src] = { contents: null, loaded: false };
+	var rm = this;
 	
-	return entities;
-};
-
-TLORM.EntityManager.prototype.addEntityComponent = function(entity, component) {
-	if (this.entities_by_id[entity.id]) {
-		entity.addComponent(component);
-		if (!this.entities_by_type[component.type]) {
-			this.entities_by_type[component.type] = [];
-		}
-		this.entities_by_type[component.type].push(entity);
-	}
-};
-
-TLORM.EntityManager.prototype.removeEntityComponent = function(entity, component) {
-	if (this.entities_by_id[entity.id]) {
-		entity.removeComponent(component);
-
-		for (var i=0; i<this.entities_by_type[component.type].length; ++i) {
-			if (this.entities_by_type[component.type][i] === entity) {
-				this.entities_by_type[component.type].splice(i, 1);
-				break;
-			}
-		}
-	}
-};
-
-TLORM.EntityManager.prototype.initAllEntities = function(game) {
-	for (var i=0; i<this.entities.length; ++i) {
-		this.entities[i].initAllComponents(game);
-	}
-};
-
-TLORM.EntityManager.prototype.getRequiredSystems = function() {
-	var systems = [];
-	for (var i=0; i<this.entities.length; ++i) {
-		systems = systems.concat(this.entities[i].getRequiredSystems());
-	}
-	return systems;
-};
-
-
-
-
-TLORM.System.Transformation = function(component_types) {
-	return {
-		type: 'Transformation',
-		update: function(game) {
-			
-			var entities = this.getTransforms(game);
-			for (var i=0; i<entities.length; ++i) {
-				var entity = entities[i];
-				var transform = entity.getComponentByType('Transform');
-				
-				if (transform.dx != null) {
-					entity.x += transform.dx;
-				}
-				if (transform.dy != null) {
-					entity.y += transform.dy;
-				}
-				if (transform.x != null) {
-					entity.x = transform.x;
-				}
-				if (transform.y != null) {
-					entity.y = transform.y;
-				}
-				if (transform.dw != null) {
-					entity.w += transform.dw;
-				}
-				if (transform.dh != null) {
-					entity.h += transform.dh;
-				}
-				if (transform.w != null) {
-					entity.w = transform.w;
-				}
-				if (transform.h != null) {
-					entity.h = transform.h;
-				}
-				
-				game.entity_manager.removeEntityComponent(entity, transform);
-			}
-		},
-		getTransforms: function(game) {
-			return game.entity_manager.getEntitiesByType('Transform');
+	/* load file synchronously */
+	var ajax = new XMLHttpRequest();
+	ajax.onreadystatechange = function() {
+		if (ajax.readyState === 4) {
+			--rm.to_load;
+			rm.json[src].contents = eval("("+ajax.responseText+")");
+			rm.json[src].loaded = true;
 		}
 	};
+	ajax.open('GET', src + "?" + new Date().getTime(), false);
+	ajax.send();
+	
+	return this.json[src].contents;
 };
 
-TLORM.System.Debug = function(component_types) {
-	return {
-		type: 'Debug',
-		component_types : component_types ,
-		update: function(game) {
-			
-			/* debug info on all entities that have all the required component types, or all */
-			var entities = [];
-			if (!this.component_types) {
-				entities = game.entity_manager.getEntities();
-			}
-			
-
-			for (var i=0; i<entities.length; ++i) {
-				console.log("Entity: "+entities[i].name);
-			}
-		}
-	};
+TLORM.ResourceManager.prototype.getJSON = function(src) {
+	return this.json[src].contents;
 };
 
-TLORM.System.Animation = function(component_types) {
-	return {
-		type: 'Animation',
-		update: function(game) {
-			
-			var entities = this.getAnimations(game);
-			for (var i=0; i<entities.length; ++i) {
-				var entity = entities[i];
-				var animation = entity.getComponentByType('Animation');
-				
-				if (animation.step == 0) {
-					animation.on_start(animation);
-					++animation.step;
-				} else if (animation.step >= animation.steps) {
-					animation.on_end(animation);
-					game.entity_manager.removeEntityComponent(entity, animation);
-				} else {
-					animation.on_step(animation, animation.step);
-					++animation.step;
-				}
-			}
-		},
-		getAnimations: function(game) {
-			return game.entity_manager.getEntitiesByType('Animation');
-		}
-	};
+TLORM.ResourceManager.prototype.allLoaded = function(game) {
+	return this.to_load === 0;
 };
 
-TLORM.Component.Render = function(z, fill_colour, stroke_colour, highlight_alpha, other_fill_colour) {
-	return {
-		type: 'Render',
-		z: z,
-		highlight_alpha: highlight_alpha,
-		fill_colour: fill_colour,
-		other_fill_colour: other_fill_colour,
-		stroke_colour: stroke_colour,
-		show_name: false
-	};
-};
 
-TLORM.Component.Transform = function(dx, dy, dw, dh, x, y, w ,h) {
-	return {
-		type: 'Transform',
-		system: 'Transformation',
-		dx: dx,
-		dy: dy,
-		dw: dw,
-		dh: dh,
-		x: x,
-		y: y,
-		w: w,
-		h: h
-	};
-};
 
-TLORM.Component.Sprite = function(src, x, y, w, h, dx, dy, dw, dh) {
-	return {
-		type: 'Sprite',
-		src: src,
-		x: x,
-		y: y,
-		w: w,
-		h: h,
-		dx: dx,
-		dy: dy,
-		dw: dw,
-		dh: dh,
-		img: null,
-		init: function(game) {
-			this.img = game.resource_manager.addImage(this.src);
-		}
-	};
-};
-
-TLORM.Component.Animation = function(steps, on_start, on_step, on_end) {
-	return {
-		type: 'Animation',
-		system: 'Animation',
-		on_start: on_start,
-		on_step: on_step,
-		on_end: on_end,
-		step: 0,
-		steps: steps
-	};
-};

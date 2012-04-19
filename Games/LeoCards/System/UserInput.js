@@ -8,8 +8,8 @@ TLORM.System.UserInput = function() {
 		init: function(game) {
 			/* register control callbacks for player */
 			var system = this;
-			game.registerEvent("click", function(event) { system.clickHandler(event); } );
-			game.registerEvent("touch", function(event) { system.clickHandler(event); } );
+			game.registerEvent("click", function(event) { system.clickHandler(event); return false; } );
+			game.registerEvent("touch", function(event) { system.clickHandler(event); return false; } );
 		},
 		clickHandler: function(event) {
 			this.touch_event = event;

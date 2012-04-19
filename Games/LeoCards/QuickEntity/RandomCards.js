@@ -13,7 +13,8 @@ TLORM.QuickEntity.RandomCards = function(game, name, cw, ch, sw, sh, colours) {
 		for (var j=0; j<rows; ++j) {
 			var x = sw+(cw+sw)*i;
 			var y = sh+(ch+sh)*j;
-			TLORM.QuickEntity.Card(game, "", "#CCC", colours_pool.pop(), x, y, cw, ch);
+			var details = colours_pool.pop();
+			TLORM.QuickEntity.Card(game, "", "#CCC", details.colour, details.value, x, y, cw, ch);
 		}
 	}
 	
@@ -21,10 +22,17 @@ TLORM.QuickEntity.RandomCards = function(game, name, cw, ch, sw, sh, colours) {
 };
 
 function largest_factor(num) {
+	var factor = 1;
+	var diff   = num - factor;
 	for (var i=Math.floor(num/2); i > 0; --i) {
 		var j = num / i;
 		if ( j % 1 == 0 ) {
-			return i;
+			var tmp_diff = Math.abs(i - j);
+			if (tmp_diff < diff) {
+				factor = i;
+				diff  = tmp_diff;
+			}
 		}
 	}
+	return factor;
 }

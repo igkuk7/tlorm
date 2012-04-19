@@ -122,7 +122,7 @@ TLORM.Game.prototype.stop = function(show_message) {
 
 TLORM.Game.prototype.gameOver = function(won, score) {
 	this.stop_message = "GAME OVER!\n"+(won ? "Congratulations, you won!" : "Sorry, you lost!")+(score ? " Your score was "+score : "");
-	this.stop();
+	this.stop(true);
 };
 
 TLORM.Game.prototype.loop = function() {

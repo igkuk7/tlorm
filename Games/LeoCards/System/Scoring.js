@@ -2,10 +2,14 @@
 
 /* system to render tubes */
 TLORM.System.Scoring = function() {
+	var flip_back_wait = 5;
 	return {
 		type: 'Scoring',
+		flipping_back: false,
+		flip_back_step: 0,
+		score: 0,
 		update: function(game) {
-
+			
 			/* cards */
 			var cards_up = [];
 			var cards = this.getCards(game);
@@ -21,16 +25,26 @@ TLORM.System.Scoring = function() {
 			}
 			
 			if (to_match == 0) {
-				game.gameOver(true, "You did it!");
+				game.gameOver(true, this.score);
 			}
 			
-			if (cards_up[0] && cards_up[1]) {
-				if (cards_up[0].card_data.value == cards_up[1].card_data.value) {
-					cards_up[0].card_data.matched = true;
-					cards_up[1].card_data.matched = true;
-				} else {
+			if (this.flipping_back) {
+				if (this.flip_back_step++ >= flip_back_wait) {
 					for (var i=0; i<cards_up.length; ++i) {
 						this.flipCard(game, cards_up[i].card, cards_up[i].card_data);
+					}
+					this.flipping_back = false;
+					this.score -= 20;
+				}
+			} else {
+				if (cards_up[0] && cards_up[1]) {
+					if (cards_up[0].card_data.value == cards_up[1].card_data.value) {
+						cards_up[0].card_data.matched = true;
+						cards_up[1].card_data.matched = true;
+						this.score += 100;
+					} else {
+						this.flipping_back = true;
+						this.flip_back_step = 0;
 					}
 				}
 			}

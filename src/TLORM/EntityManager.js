@@ -73,6 +73,10 @@ TLORM.EntityManager.prototype.getEntitiesByPosition= function(x,y) {
 
 TLORM.EntityManager.prototype.addEntityComponent = function(entity, component) {
 	if (this.entities_by_id[entity.id]) {
+		var c = entity.getComponentByType(component.type);
+		if (c) {
+			this.removeEntityComponent(entity, c);
+		}
 		entity.addComponent(component);
 		if (!this.entities_by_type[component.type]) {
 			this.entities_by_type[component.type] = [];
