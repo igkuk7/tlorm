@@ -70,8 +70,15 @@ TLORM.System.UserInput = function() {
 		init: function(game) {
 			/* register control callbacks for player */
 			var system = this;
-			game.registerEvent("click", function(event) { system.clickHandler(event); return false; } );
-			game.registerEvent("touch", function(event) { system.clickHandler(event); return false; } );
+
+			/* prevent default behaviour on mobiles */
+			var touch_events = [ 'touchstart', 'touchchange', 'touchmove', 'touchend', 'touchcancel', 'gesturestart', 'gesturechange', 'gesturemove', 'gestureend' ];
+			for (var i=0; i<touch_events.length; ++i) {
+				game.registerEvent(touch_events[i], function(event) { event.preventDefault(); return false; } );
+			}
+			
+			game.registerEvent("click", function(event) { system.clickHandler(event); event.preventDefault(); return false; } );
+			game.registerEvent("touch", function(event) { system.clickHandler(event); event.preventDefault(); return false; } );
 		},
 		clickHandler: function(event) {
 			this.touch_event = event;

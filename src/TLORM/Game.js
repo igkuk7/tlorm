@@ -1,4 +1,12 @@
 
+var renderLoop = 
+	window.requestAnimationFrame       ||
+	window.webkitRequestAnimationFrame ||
+	window.mozRequestAnimationFrame    ||
+	window.oRequestAnimationFrame      ||
+	window.msRequestAnimationFrame;
+if (!renderLoop) throw "No animation looping supported!";
+
 TLORM.Game = function(name, canvas) {
 	this.name = name;
 	this.canvas = canvas;
@@ -10,10 +18,7 @@ TLORM.Game = function(name, canvas) {
 	this.onStop = null;
 	this.events = {};
 	
-	this.entity_manager = new TLORM.EntityManager();
-	this.resource_manager = new TLORM.ResourceManager();
-	this.system_manager = new TLORM.SystemManager();
-	
+	this.reset();
 	this.parseParams();
 };
 
@@ -37,6 +42,7 @@ TLORM.Game.prototype.reset = function() {
 	this.entity_manager = new TLORM.EntityManager();
 	this.resource_manager = new TLORM.ResourceManager();
 	this.system_manager = new TLORM.SystemManager();
+	this.render_system_manager = new TLORM.SystemManager();
 };
 
 TLORM.Game.prototype.border = function() {
@@ -94,6 +100,7 @@ TLORM.Game.prototype.start = function() {
 	}
 	
 	this.system_manager.initAllSystems(this);
+	this.render_system_manager.initAllSystems(this);
 	this.startIfResourcesLoaded();
 };
 
@@ -104,6 +111,7 @@ TLORM.Game.prototype.startIfResourcesLoaded = function() {
 	} else {
 		this.running = true;
 		this.loop();
+		this.render_loop();
 	}
 };
 
@@ -133,10 +141,22 @@ TLORM.Game.prototype.loop = function() {
 	}
 };
 
+TLORM.Game.prototype.render_loop = function() {
+	if (this.running) {
+		this.render_update();
+		var s = this;
+		renderLoop(function() { s.render_loop(); });
+	}
+};
+
 TLORM.Game.prototype.update = function() {
 	this.system_manager.updateAllSystems(this);
+};
+
+TLORM.Game.prototype.render_update = function() {
+	this.render_system_manager.updateAllSystems(this);
 	
 	/* draw from buffer to main canvas */
 	this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 	this.context.drawImage(this.buffer_canvas, 0, 0);
-};
+}
