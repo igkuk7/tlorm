@@ -31,8 +31,14 @@ TLORM.SystemManager.prototype.initAllSystems = function(game) {
 
 TLORM.SystemManager.prototype.updateAllSystems = function(game) {
 	for (var i=0; i<this.systems.length; ++i) {
-		this.systems[i].update(game);
+		if (this.systems[i].type != 'Render') {
+			this.systems[i].update(game);
+		}
 	}
+};
+
+TLORM.SystemManager.prototype.renderAllSystems = function(game) {
+	this.systems_by_type['Render'].update(game);
 };
 
 

@@ -7,7 +7,7 @@ TLORM.System.Render3D = function(context, w, h) {
 		context: context,
 		w: w,
 		h: h,
-		camera: { x: 10, y: 10, },
+		camera: { x: 0, y: 0, d: 10 },
 		update: function(game) {
 			
 			/* clear everything */
@@ -28,8 +28,21 @@ TLORM.System.Render3D = function(context, w, h) {
 			return null;
 		},
 		renderMap: function(game, map_entity, map) {
-			this.context.strokeStyle = '#000';
-			this.context.strokeRect(map_entity.x, map_entity.y, map_entity.w, map_entity.h);
+			//this.context.strokeStyle = '#000';
+			//this.context.strokeRect(map_entity.x, map_entity.y, map_entity.w, map_entity.h);
+
+			var gw = map_entity.w / map.w;
+			var gh = map_entity.h / map.h;
+			for (var y=0; y<map.length; ++y) {
+				for (var x=0; x<map[y].length; ++x) {
+					var screen_y = (this.camera.d * (map[y][x]-this.camera.y))/y;
+					var screen_x = (this.camera.d * (x-this.camera.x))/y;
+					this.context.fillStyle = 'rgb('+colour[0]+','+colour[1]+','+colour[2]+')';
+					this.context.fillRect(screen_x, screen_y, 1, 1);
+				}
+			}
+			
+			return;
 			
 			for (var x=map_entity.x; x<map_entity.w; ++x) {
 				for (var y=map_entity.y; y<map_entity.h; ++y) {
@@ -39,25 +52,24 @@ TLORM.System.Render3D = function(context, w, h) {
 				}
 			}
 		},
-		sendRay: function(game, map_entity, map, sx, sy) {
+		sendRay: function(game, map_entity, map, screen_x, screen_y) {
 			var gw = map_entity.w / map.w;
 			var gh = map_entity.h / map.h;
-			var grid_x = Math.floor(sx/gw);
+			var grid_x = Math.floor(screen_x/gw);
 			
-			var dy = map_entity.h - sy;
+			var dy = map_entity.h - screen_y;
 			
 			/* Cast rays from bottom of the screen perpendicularly */
 			var grid_y = null;
 			for (var y=map.h-1; y>=0; --y) {
-				if (map.map[y][grid_x] != 0) {
-					if (dy < map.map[y][grid_x]*gh) {
-						grid_y = y;
-					}
+				var map_details = map.map[y][grid_x]*gh;
+				if (map_details != 0 && dy < map_details) {
+					grid_y = y;
 				}
 			} 
 			
 			if (grid_y) {
-				var col = (255 * (grid_y/map.h));
+				var col = 255-(20 * grid_y );
 				return [ col, col, col ];
 			}
 			

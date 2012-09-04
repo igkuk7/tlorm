@@ -7,10 +7,17 @@ TLORM.Entity = function(name, components, x, y, w, h) {
 	this.name = name;
 
 	/* TODO, move these to physics component */
+	this.px = x;
+	this.py = y;
 	this.x = x;
 	this.y = y;
+	this.point  = new TLORM.Math.Point(x, y);
 	this.w = w;
 	this.h = h;
+	this.bounding_box = new TLORM.Math.Quadrilateral(
+		new TLORM.Math.Point(x,   y  ),
+		new TLORM.Math.Point(x+w, y+h)
+	);
 	
 	this.components = [];
 	this.components_by_type = {};
@@ -70,3 +77,45 @@ TLORM.Entity.prototype.getRequiredSystems = function() {
 	}
 	return systems;
 };
+
+TLORM.Entity.prototype.move = function(dx, dy) {
+	this.moveTo((dx == null ? null : this.x+dx), (dy == null ? null : this.y+dy));
+};
+
+TLORM.Entity.prototype.moveTo = function(x, y) {
+	this.px = this.x;
+	this.py = this.y;
+	
+	if (x != null) {
+		this.x = x;
+		this.point.x = x;
+	}
+	
+	if (y != null) {
+		this.point.y = x;
+		this.y = y;
+	}
+	
+	this.bounding_box = new TLORM.Math.Quadrilateral(
+		new TLORM.Math.Point(this.x,        this.y       ),
+		new TLORM.Math.Point(this.x+this.w, this.y+this.h)
+	);
+};
+
+TLORM.Entity.prototype.direction = function() {
+	var x_diff = this.px - this.x;
+	var y_diff = this.py - this.y;
+	
+	if (x_diff == 0 && y_diff == 0) {
+		return '';
+	} else if (x_diff < 0) {
+		return 'R';
+	} else if (x_diff > 0) {
+		return 'L';
+	} else if (y_diff < 0) {
+		return 'D';
+	} else if (y_diff > 0) {
+		return 'U';
+	}
+	
+}

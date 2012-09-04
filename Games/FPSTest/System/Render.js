@@ -1,6 +1,6 @@
 
 /* system to render */
-TLORM.System.Render = function(context, w, h) {
+TLORM.System.RenderX = function(context, w, h) {
 	return {
 		type: 'Render',
 		context: context,
@@ -31,7 +31,7 @@ TLORM.System.Render = function(context, w, h) {
 					var x = map_entity.x + (gw*i);
 					var y = map_entity.y + (gh*j);
 					if (map.map[j][i] > 0) {
-						var col = (255 * (j/map.h));
+						var col = 255-(20 * map.map[j][i] );
 						this.context.fillStyle = 'rgb('+col+','+col+','+col+')';
 					} else {
 						this.context.fillStyle = '#FFF';

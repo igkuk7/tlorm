@@ -16,12 +16,8 @@ fi
 touch $COMBINED_FILE.tmp
 
 # add all files
-for jsfile in `find . -name "*.js"`
-do
-	echo "Combining file $jsfile"
-	echo -e "\n/*\n * $jsfile\n */\n" >> $COMBINED_FILE.tmp
-	cat $jsfile >> $COMBINED_FILE.tmp
-done
+find . -name "*.js"
+find . -name "*.js" | xargs cat $1 >> $COMBINED_FILE.tmp
 
 mv $COMBINED_FILE.tmp $COMBINED_FILE
 echo "Combined files into $COMBINED_FILE"

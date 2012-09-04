@@ -4,9 +4,16 @@ TLORM.EntityManager = function() {
 	this.entities = [];
 	this.entities_by_type = {};
 	this.entities_by_id = {};
+	this.to_remove = [];
+	this.to_add = [];
 };
 
 TLORM.EntityManager.prototype.addEntity = function(entity) {
+	//this.to_add.push(entity);
+	this._addEntity(entity);
+	return entity;
+};
+TLORM.EntityManager.prototype._addEntity = function(entity) {
 	entity.id = this.next_id++;
 	
 	this.entities.push(entity);
@@ -24,6 +31,9 @@ TLORM.EntityManager.prototype.addEntity = function(entity) {
 };
 
 TLORM.EntityManager.prototype.removeEntity = function(entity) {
+	this.to_remove.push(entity);
+};
+TLORM.EntityManager.prototype._removeEntity = function(entity) {
 	for (var i=0; i<this.entities.length; ++i) {
 		if (this.entities[i] === entity) {
 			this.entities.splice(i, 1);
@@ -73,10 +83,6 @@ TLORM.EntityManager.prototype.getEntitiesByPosition= function(x,y) {
 
 TLORM.EntityManager.prototype.addEntityComponent = function(entity, component) {
 	if (this.entities_by_id[entity.id]) {
-		var c = entity.getComponentByType(component.type);
-		if (c) {
-			this.removeEntityComponent(entity, c);
-		}
 		entity.addComponent(component);
 		if (!this.entities_by_type[component.type]) {
 			this.entities_by_type[component.type] = [];
@@ -110,6 +116,18 @@ TLORM.EntityManager.prototype.getRequiredSystems = function() {
 		systems = systems.concat(this.entities[i].getRequiredSystems());
 	}
 	return systems;
+};
+
+TLORM.EntityManager.prototype.update = function(game) {
+	for (var i=0; i<this.to_remove.length; ++i) {
+		this._removeEntity(this.to_remove[i]);
+	}
+	this.to_remove = [];
+	
+	for (var i=0; i<this.to_add.length; ++i) {
+		this._addEntity(this.to_add[i]);
+	}
+	this.to_add = [];
 };
 
 
