@@ -1,0 +1,1 @@
+window.onload=function(){setup_game()};function setup_game(){var b=document.getElementById("tlorm_game_canvas");var a=new TLORM.Game("foo",b);a.start()};
