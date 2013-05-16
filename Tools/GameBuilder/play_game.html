@@ -1,0 +1,19 @@
+<html>
+	<head>
+		<title>TLORM Game Builder - Play Game</title>
+		<script type="text/javascript" src="../../all.js"></script>
+	</head>
+	<body>
+		<h1>TLORM Game Builder - Play Game</h1>
+		<script type="text/javascript">
+			// load the game from local storage and play it
+			var local_json_stored = localStorage.getItem("game_settings");
+			if (local_json_stored) {
+				var game = TLORMEngine.GameFromJSONObject(JSON.parse(local_json_stored));
+				game.start();
+			} else {
+				alert("No game present");
+			}
+		</script>
+	</body>
+</html>
