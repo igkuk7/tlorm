@@ -1,0 +1,101 @@
+{
+	"name": "Breakout",
+	"width": 800,
+	"height": 600,
+	"screens": [
+		{ "type": "GameScreen", "name": "Game", "current_screen": "true", "args": {
+			"switch_screen": [
+				{ "goto": "Pause", "conditions": [ { "key_code": 32 } ] },
+				{ "goto": "Game Over", "conditions": [
+					{
+						"components": [ "Data" ],
+						"check": "=",
+						"value": 1
+					}
+				] }
+			]
+		} },
+		{ "type": "Screen", "name": "Pause", "args": {
+			"switch_screen": [
+				{ "goto": "Game", "conditions": [ { "key_code": 32 } ] }
+			]
+		} },
+		{ "type": "Screen", "name": "Game Over", "args": {
+		} }
+	],
+	"systems": [ "Render2D", "Input", "Movement", "Particle", "Timer" ],
+	"entities": [
+		
+		{
+			"name": "Top",
+			"screens": [],
+			"components": [
+				{ "type": "Position", "args": { "x": 0, "y": -19, "w": 800, "h": 20 } },
+				{ "type": "Render2D", "args": { "fill_colour": "#000000" } },
+				{ "type": "Collision", "args": { "group": "wall", "groups": [] } }
+			]
+		},
+		{
+			"name": "Left",
+			"screens": [],
+			"components": [
+				{ "type": "Position", "args": { "x": -19, "y": 0, "w": 20, "h": 600 } },
+				{ "type": "Render2D", "args": { "fill_colour": "#000000" } },
+				{ "type": "Collision", "args": { "group": "wall", "groups": [] } }
+			]
+		},
+		{
+			"name": "Right",
+			"screens": [],
+			"components": [
+				{ "type": "Position", "args": { "x": 799, "y": 0, "w": 20, "h": 600 } },
+				{ "type": "Render2D", "args": { "fill_colour": "#000000" } },
+				{ "type": "Collision", "args": { "group": "wall", "groups": [] } }
+			]
+		},
+		{
+			"name": "Bottom",
+			"screens": [],
+			"components": [
+				{ "type": "Position", "args": { "x": 0, "y": 600, "w": 800, "h": 20 } },
+				{ "type": "Render2D", "args": { "fill_colour": "#000000" } },
+				{ "type": "Collision", "args": { "group": "void", "groups": [] } }
+			]
+		},
+		
+		
+		{
+			"name": "Ball1",
+			"screens": [],
+			"components": [
+				{ "type": "Position", "args": { "x": 70, "y": 550, "w": 10, "h": 10 } },
+				{ "type": "Render2D", "args": { "fill_colour": "#33DDBB" } },
+				{ "type": "Velocity", "args": { "dx": 5, "dy": 4, "constant": true } },
+				{ "type": "Collision", "args": { "group": "ball", "groups": [ "wall", "paddle"], "resolution": "bounce" } },
+				{ "type": "Collision", "args": { "group": "ball", "groups": [ "brick" ], "resolution": "destroy_hit_and_bounce" } },
+				{ "type": "Collision", "args": { "group": "ball", "groups": [ "void" ], "resolution": "destroy"  } },
+				{ "type": "Collision", "args": { "group": "ball", "groups": [ "brick" ], "resolution": "edit_component", 
+				                                  "entity": "Paddle1", "component": "Data", "function": "addToData", "function_args": [ "score", 1 ] } }
+			]
+		},
+		
+		
+		{
+			"name": "Paddle1",
+			"screens": [],
+			"components": [
+				{ "type": "Position", "args": { "x": 20, "y": 550, "w": 100, "h": 10 } },
+				{ "type": "Render2D", "args": { "fill_colour": "#DDBB33" } },
+				{ "type": "Collision", "args": { "group": "paddle", "groups": [ "wall"], "resolution": "push" } },
+				{ "type": "Data", "args": { "score": 0 } },
+				{ "type": "RenderData", "args": { "x": 380, "y": 580 } },
+				{ "type": "MouseInput", "args": { 
+					"move": { "type": "Translation", "args": { "move_middle": "true", "speed": 10 }, "mouseXParam": "x", "remove_existing": true }
+				} }, 
+				{ "type": "TouchInput", "args": { 
+					"drag": { "type": "Translation", "args": { "move_middle": "true", "speed": 10 }, "mouseXParam": "x", "remove_existing": true }
+				} }
+			]
+		}
+	]
+}

@@ -1,0 +1,101 @@
+<html>
+	<head>
+		<title>TLORM Engine</title>
+
+		<style>
+			body { background: #ccc; position: fixed; }
+			canvas { background: #fff; }
+		</style>
+		<script type="text/javascript" src="../../all.js"></script>
+		<script type="text/javascript">
+			window.onload = function() {
+				var game = TLORMEngine.GameFromJSON('Breakout.json');
+
+				// add all bricks
+				var game_screen = game.screen_manager.getGameScreen();
+				var brick_w = 60;
+				var brick_h = 50;
+				var brick_gap = 20;
+				for (var y = brick_h*2; y < game.height/2; y+=brick_h) {
+					for (var x = brick_w; x < game.width - brick_w*2-1; x+=brick_w) {
+						var position = new TLORMEngine.Components.Position({ x: x, y: y, w: brick_w-brick_gap, h: brick_h-brick_gap });
+						var data = new TLORMEngine.Components.Data({});
+						var render, collision;
+						if ( Math.random() < 0.45 ) {
+							render = new TLORMEngine.Components.Render2D({ fill_colour:  "#FF7755"});
+							collision = new TLORMEngine.Components.Collision({
+								group: "brick",
+								groups: [ "ball" ],
+								oncollide: function(entity, hit_entity) { 
+									var position = entity.getComponentByType('Position');
+									game.entity_manager.addEntity(new TLORMEngine.Entities.Entity({
+										name: "multi_ball_from_"+hit_entity.name,
+										components: [
+											new TLORMEngine.Components.Position({ x: position.x, y: position.y, w: position.w, h: position.h }),
+											new TLORMEngine.Components.Render2D({ fill_colour: "#33DDBB"}),
+											new TLORMEngine.Components.Velocity({ dx: -3, dy: 4, constant: true }),
+											new TLORMEngine.Components.Collision({ group: "ball", groups: ["wall", "paddle"], resolution: "bounce" }),
+											new TLORMEngine.Components.Collision({ group: "ball", groups: ["brick"], resolution: "destroy_hit_and_bounce" }),
+											new TLORMEngine.Components.Collision({ group: "ball", groups: ["void"], resolution: "destroy" }),
+										]
+									}));
+									game.entity_manager.addEntity(new TLORMEngine.Entities.Entity({
+										name: "multi_ball_from_"+hit_entity.name,
+										components: [
+											new TLORMEngine.Components.Position({ x: position.x, y: position.y, w: position.w, h: position.h }),
+											new TLORMEngine.Components.Render2D({ fill_colour: "#33DDBB"}),
+											new TLORMEngine.Components.Velocity({ dx: 3, dy: 4, constant: true }),
+											new TLORMEngine.Components.Collision({ group: "ball", groups: ["wall", "paddle"], resolution: "bounce" }),
+											new TLORMEngine.Components.Collision({ group: "ball", groups: ["brick"], resolution: "destroy_hit_and_bounce" }),
+											new TLORMEngine.Components.Collision({ group: "ball", groups: ["void"], resolution: "destroy" }),
+										]
+									}));
+								}
+							});
+						} else if ( Math.random() < 0.35 ) {
+							render = new TLORMEngine.Components.Render2D({ fill_colour:  "#BB3311"});
+							collision = new TLORMEngine.Components.Collision({
+								group: "brick",
+								groups: [ "ball" ],
+								oncollide: function(entity, hit_entity) { 
+									var position = entity.getComponentByType('Position');
+									game.entity_manager.addEntity(new TLORMEngine.Entities.Entity({
+										name: "noclip_ball_from_"+hit_entity.name,
+										components: [
+											new TLORMEngine.Components.Position({ x: position.x, y: position.y, w: position.w, h: position.h }),
+											new TLORMEngine.Components.Render2D({ fill_colour: "#33DDBB"}),
+											new TLORMEngine.Components.Velocity({ dx: -1, dy: 4, constant: true }),
+											new TLORMEngine.Components.Collision({ group: "ball", groups: ["wall", "paddle"], resolution: "bounce" }),
+											new TLORMEngine.Components.Collision({ group: "ball", groups: ["brick"], resolution: "destroy_hit" }),
+											new TLORMEngine.Components.Collision({ group: "ball", groups: ["void"], resolution: "destroy" }),
+										]
+									}));
+								}
+							});
+						} else {
+							render = new TLORMEngine.Components.Render2D({ fill_colour:  "#DD5533"});
+							collision = new TLORMEngine.Components.Collision({ group: "brick", groups: [] });
+						}
+
+						game.entity_manager.addEntity(new TLORMEngine.Entities.Entity({
+							name: "brick_"+x+"_"+y,
+							components: [ position, render, collision, data ]
+						}));
+					}
+				}
+
+				game.onupdate2 = function() {
+					var game_screen = game.screen_manager.getGameScreen();
+					if (game_screen.getEntitiesByType("Data").length == 0) {
+						alert("Game Over!")
+						game.stop();
+						//game.start();
+					}
+				};
+
+				game.start();
+			};
+		</script>
+	</head>
+	<body></body>
+</html>

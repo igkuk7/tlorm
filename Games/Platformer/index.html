@@ -1,0 +1,18 @@
+<html>
+	<head>
+		<title>TLORM Engine</title>
+		<style>
+			body { background: #ccc; }
+			canvas { background: #fff; }
+		</style>
+		<script type="text/javascript" src="../../all.js"></script>
+		<script type="text/javascript">
+			window.onload = function() {
+				var game = TLORMEngine.GameFromJSON('Platformer.json');
+				
+				game.start();
+			};
+		</script>
+	</head>
+	<body></body>
+</html>

@@ -1,0 +1,61 @@
+<html>
+	<head>
+		<title>Shooter</title>
+		<style>
+			body { background: #ccc; }
+			canvas { background: #fff; }
+		</style>
+		<script type="text/javascript" src="../../all.js"></script>
+		<script type="text/javascript">
+			window.onload = function() {
+				var game = TLORMEngine.GameFromJSONObject({
+					"name": "DungeonRunner",
+					"width": 800,
+					"height": 600,
+					"screens": [
+						{ "name": "Game", "type": "GameScreen", "current_screen": "true" }
+					],
+					"entities": [
+						{
+							"name": "Player",
+							"components": [
+								{ "type": "Position", "args": { "x": 200, "y": 200, "w": 10, "h": 10 } },
+								{ "type": "Render2D", "args": { "fill_colour": "#c00" } },
+								{ "type": "KeyInput", "args": { "map": {
+									"87": [ { "type": "Velocity", "args": { "dy": -15 } } ],
+									"83": [ { "type": "Velocity", "args": { "dy":  15 } } ],
+									"65": [ { "type": "Velocity", "args": { "dx": -15 } } ],
+									"68": [ { "type": "Velocity", "args": { "dx":  15 } } ],
+									"32": [ { "new_entity": true, "entity": {
+										"name": "Bullet",
+										"components": [
+											{ "type": "Position", "args": {
+												"x": {
+													"type": "Position",
+													"function": "getMiddleX",
+												},
+												"y": {
+													"type": "Position",
+													"function": "getMiddleY",
+												}, 
+												"w": 1,
+												"h": 1
+											} },
+											{ "type": "Render2D", "args": { "fill_colour": "#a00" } },
+											{ "type": "Velocity", "args": { "dx": "30", "constant": true } },
+										]
+									} } ]
+								} } },
+							]
+						}
+					]
+				});
+
+				
+				// start the game
+				game.start();
+			}
+		</script>
+	</head>
+	<body></body>
+</html>

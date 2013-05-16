@@ -1,0 +1,185 @@
+{
+	"name": "Pong",
+	"width": 800,
+	"height": 600,
+	"options": { "delta_modifier": 40 },
+	"sounds": [ "ping.wav", "pong.wav", "player_score.wav", "opponent_score.wav", "bounce.wav", "music.wav" ],
+	"screens": [
+		{ "type": "MenuScreen", "name": "Main Menu", "current_screen": true, "args": {
+			"class": "MainMenu",
+			"show_back": false,
+			"options": {
+				"New Game": { "goto": "Game" },
+				"Credits": { "goto": "Credits" }
+			}
+		} },
+		{ "type": "OptionsScreen", "name": "Options", "args": {
+			"class": "Options",
+			"options": {
+				"Difficulty (1=easy, 5=hard)": { "setting": "ball_speed", "options": [ "Easy", "Hard" ], "default": "Easy" },
+				"Ball Speed": { "setting": "ball_speed", "options": [ "Slow", "Fast" ], "default": "Fast" },
+				"Ball Trail": { "setting": "ball_trail", "flag": true },
+				"Music": { "setting": "music", "flag": true, "default": true },
+				"Sound Effects": { "setting": "sound_effects", "flag": true, "default": true }
+			}
+		} },
+		{ "type": "Screen", "name": "Credits", "args": {
+			"class": "Credits",
+			"show_text": [
+				{ "class": "CreationInfo", "text": "Created with TLORM Engine" },
+				{ "class": "SoundsInfo", "html": "Sounds created using <a href=\"http://www.bfxr.net/\">Bfxr</a>" },
+				{ "class": "MoreInfo", "text": "More info..." }
+			],
+			"show_images": [
+				{ "class": "CreditsImage", "src": "img/credits.png" }
+			]
+		} },
+		{ "type": "Screen", "name": "Pause", "args": {
+			"class": "Pause",
+			"switch_screen": [ { "goto": "Game", "conditions": [ { "key_code": 32 } ] } ]
+		} },
+		{ "type": "GameScreen", "name": "Game", "args": {
+			"class": "Game",
+			"switch_screen": [
+				{ "goto": "Pause", "conditions": [ { "key_code": 32 } ] },
+				{ "goto": "GameOverWon", "conditions": [ {
+					"entity": "Player",
+					"component": "Data",
+					"function": "getData",
+					"args": [ "score" ],
+					"check": "=",
+					"value": 10
+				} ] },
+				{ "goto": "GameOverLost", "conditions": [ {
+					"entity": "Opponent",
+					"component": "Data",
+					"function": "getData",
+					"args": [ "score" ],
+					"check": "=",
+					"value": 10
+				} ] }
+			]
+		} },
+		{ "type": "Screen", "name": "GameOverWon", "args": {
+			"class": "GameOverLost",
+			"show_text": [
+				{ "class": "WonMessage", "text": "You Lost!" },
+				{ "class": "Restart", "text": "Space to play again." }
+			],
+			"switch_screen": [ { "goto": "Game", "reset": true, "conditions": [ { "key_code": 32 } ] } ]
+		} },
+		{ "type": "Screen", "name": "GameOverLost", "args": {
+			"class": "GameOverLost",
+			"show_text": [
+				{ "class": "LostMessage", "text": "You Lost!" },
+				{ "class": "Restart", "text": "Space to play again." }
+			],
+			"switch_screen": [ { "goto": "Game", "reset": true, "conditions": [ { "key_code": 32 } ] } ]
+		} }
+	],
+	"entities": [
+		
+		{
+			"name": "Top",
+			"components": [
+				{ "type": "Position", "args": { "x": 0, "y": 0, "w": 800, "h": 10 } },
+				{ "type": "Render2D", "args": { "fill_colour": "#000000" } },
+				{ "type": "Collision", "args": { "group": "wall", "groups": [] } }
+			]
+		},
+		{
+			"name": "Bottom",
+			"components": [
+				{ "type": "Position", "args": { "x": 0, "y": 590, "w": 800, "h": 10 } },
+				{ "type": "Render2D", "args": { "fill_colour": "#000000" } },
+				{ "type": "Collision", "args": { "group": "wall", "groups": [] } }
+			]
+		},
+		{
+			"name": "Left",
+			"components": [
+				{ "type": "Position", "args": { "x": 0, "y": 0, "w": 10, "h": 600 } },
+				{ "type": "Render2D", "args": { "fill_colour": "#000000" } },
+				{ "type": "Collision", "args": { "group": "player_goal", "groups": [] } }
+			]
+		},
+		{
+			"name": "Right",
+			"components": [
+				{ "type": "Position", "args": { "x": 790, "y": 0, "w": 10, "h": 600 } },
+				{ "type": "Render2D", "args": { "fill_colour": "#000000" } },
+				{ "type": "Collision", "args": { "group": "opponent_goal", "groups": [] } }
+			]
+		},
+		{
+			"name": "CenterLine",
+			"components": [
+				{ "type": "Position", "args": { "x": 399, "y": 0, "w": 2, "h": 600 } },
+				{ "type": "Render2D", "args": { "fill_colour": "#000000" } },
+				{ "type": "Sound", "args": { "src": "music.wav", "loop": true, "volume": 0.1 } }
+			]
+		},
+		
+		
+		{
+			"name": "Ball",
+			"components": [
+				{ "type": "Position", "args": { "x": 400, "y": 300, "w": 10, "h": 10 } },
+				{ "type": "Render2D", "args": { "fill_colour": "#33DDBB" } },
+				{ "type": "Velocity", "args": { "dx": -5, "dy": 2, "constant": true } },
+				{ "type": "Collision", "args": { "group": "ball", "groups": [ "wall", "player_paddle", "opponent_paddle" ], "resolution": "bounce" } },
+				{ "type": "Collision", "args": { "group": "ball", "groups": [ "wall" ], "resolution": "add_component", 
+				                                  "component": "Sound", "component_args": { "src": "bounce.wav" } } },
+				{ "type": "Collision", "args": { "group": "ball", "groups": [ "player_paddle", "opponent_paddle"  ], "resolution": "edit_component", 
+				                                  "component": "Velocity", "position": "all", "function": "increase", "function_args": [ 0.5, 0.5 ] } },
+				{ "type": "Collision", "args": { "group": "ball", "groups": [ "player_goal" ], "resolution": "edit_component", 
+				                                  "entity": "Opponent", "component": "Data", "function": "addToData", "function_args": [ "score", 1 ] } },
+				{ "type": "Collision", "args": { "group": "ball", "groups": [ "player_goal" ], "resolution": "add_component", 
+				                                  "component": "Sound", "component_args": { "src": "opponent_score.wav" } } },
+				{ "type": "Collision", "args": { "group": "ball", "groups": [ "opponent_goal" ], "resolution": "edit_component", 
+				                                  "entity": "Player", "component": "Data", "function": "addToData", "function_args": [ "score", 1 ] } },
+				{ "type": "Collision", "args": { "group": "ball", "groups": [ "opponent_goal" ], "resolution": "add_component", 
+				                                  "component": "Sound", "component_args": { "src": "player_score.wav" } } },
+				{ "type": "Collision", "args": { "group": "ball", "groups": [ "player_goal", "opponent_goal" ], "resolution": "edit_component", 
+				                                  "component": "Velocity", "position": "all", "function": "setRandom", "function_args": [ -5, -3, 2, 4 ] } },
+				{ "type": "Collision", "args": { "group": "ball", "groups": [ "player_goal", "opponent_goal" ], "resolution": "edit_component", 
+				                                  "component": "Position", "function": "moveTo", "function_args": [ 400, 300 ] } },
+				{ "type": "Collision", "args": { "group": "ball", "groups": [ "player_paddle" ], "resolution": "add_component", 
+				                                  "component": "Sound", "component_args": { "src": "ping.wav" } } },
+				{ "type": "Collision", "args": { "group": "ball", "groups": [ "opponent_paddle" ], "resolution": "add_component", 
+				                                  "component": "Sound", "component_args": { "src": "pong.wav" } } }
+			]
+		},
+
+		
+		{
+			"name": "Player",
+			"components": [
+				{ "type": "Position", "args": { "x": 20, "y": 300, "w": 5, "h": 50 } },
+				{ "type": "Render2D", "args": { "fill_colour": "#DDBB33" } },
+				{ "type": "Collision", "args": { "group": "player_paddle", "groups": [ "wall"], "resolution": "push" } },
+				{ "type": "MouseInput", "args": { 
+					"move": { "type": "Translation", "args": { "move_middle": "true" }, "mouseYParam": "y" }
+				} }, 
+				{ "type": "TouchInput", "args": { 
+					"drag": { "type": "Translation", "args": { "move_middle": "true" }, "mouseYParam": "y" }
+				} }, 
+				{ "type": "Data", "args": { "score": 0 } },
+				{ "type": "RenderData", "args": { "x": 30, "y": 30 } },
+				{ "type": "Follow", "args": { "entity": "Ball", "dx": 0, "dy": 5, "move_middle": true } }
+			]
+		},
+
+		{
+			"name": "Opponent",
+			"components": [
+				{ "type": "Position", "args": { "x": 780, "y": 300, "w": 5, "h": 50 } },
+				{ "type": "Render2D", "args": { "fill_colour": "#DDBB33" } },
+				{ "type": "Collision", "args": { "group": "opponent_paddle", "groups": [ "wall"], "resolution": "push" } },
+				{ "type": "Data", "args": { "score": 0 } },
+				{ "type": "RenderData", "args": { "x": 710, "y": 30 } },
+				{ "type": "Follow", "args": { "entity": "Ball", "dx": 0, "dy": 5, "move_middle": true } }
+			]
+		}
+	]
+}

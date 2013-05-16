@@ -1,0 +1,179 @@
+<html>
+	<head>
+		<title>TLORM Engine</title>
+		<style>
+			body { background: #ccc; }
+			canvas { background: #fff; }
+		</style>
+		<script type="text/javascript" src="../../all.js"></script>
+		<script type="text/javascript" >
+			window.onload = function() {
+				start_game();
+
+			};
+
+			function start_game() {
+				noise_lookup = {};
+				var game = TLORMEngine.GameFromJSON('3DTest.json');
+
+				// add cube of cubes
+				var octree = new Octree()
+				var start = new Date().getTime();
+				var width  = 5000;
+				var height = 500;
+				var depth  = 5000;
+				var smoothing = 1;
+				var game_screen = game.screen_manager.getGameScreen();
+				var cw = 50, ch = 50, cd = 50;
+				var octree = new Octree(0, width, 0, height, 0, depth, 10);
+				for (var z = 0; false && z<=depth-cd; z+=cd) {
+					for (var x = 0; x<=width-cw; x+=cw) {
+						var random_height = noise(x/cw, z/cd, smoothing, height);
+
+						// just do towers for performance
+						var block_height = Math.floor(random_height / ch) * ch;
+						var position = new TLORMEngine.Components.Position({ x: x, y: 0, z: -z, w: cw, h: block_height, d: cd });
+						var render = new TLORMEngine.Components.Render3D({ colour: 0x11EE33, group: 1, shadow: false  });
+						var entity = new TLORMEngine.Entities.Entity({
+							name: "tower_"+x+"_"+z,
+							components: [ position, render ]
+						});
+						octree.add(x, 0, z, entity);
+						game_screen.entity_manager.addEntity(entity);
+
+						// for (var y = 0; y<=random_height-ch; y+=ch) {
+						// 	var position = new TLORMEngine.Components.Position({ x: x, y: y, z: z, w: cw, h: ch, d: cd });
+						// 	var render = new TLORMEngine.Components.Render3D({ colour: 0x11EE33, group: 1 });
+						// 	var entity = new TLORMEngine.Entities.Entity({
+						// 		name: "cube"+x+"_"+y+"_"+z,
+						// 		components: [ position, render ]
+						// 	});
+						// 	octree.add(x, y, z, entity);
+						// 	game_screen.entity_manager.addEntity(entity);
+						// }
+					}
+				}
+
+
+
+				var end = new Date().getTime();
+				console.log("Time to generate: "+(end-start)+"ms");
+
+				// add octree to visualize
+				//octreeToEntities(game_screen, octree);
+
+				var start = new Date().getTime();
+				game.start();
+				//game.stop();
+				var end = new Date().getTime();
+				console.log("Time to render: "+(end-start)+"ms");
+				console.log(game_screen.entity_manager.getEntities().length);
+			}
+
+			var noise_lookup = {};
+			function noise(x, y, smoothing, height) {
+				if (smoothing <= 0) {
+					return exactNoise(x, y, height);
+				}
+
+				var neighbouring_noise = noise(x, y, smoothing -1, height);
+				var count = 1;
+				for (var xi=x-1; xi<=x+1; ++xi) {
+					for (var yi=y-1; yi<=y+1; ++yi) {
+						neighbouring_noise += noise(xi, yi, smoothing -1, height);
+						++count;
+					}
+				}
+
+				return neighbouring_noise / count;
+			}
+
+			function exactNoise(x, y, height) {
+				if (!noise_lookup[x+","+y]) {
+					noise_lookup[x+","+y] = Math.random()*height;
+				}
+				return noise_lookup[x+","+y];
+			}
+
+			function Octree(x, w, y, h, z, d, limit) {
+				this.x = x;
+				this.y = y;
+				this.z = z;
+				this.w = w;
+				this.h = h;
+				this.d = d;
+				this.limit = limit;
+				this.has_split = false;
+				this.objects = {};
+				this.object_count = 0;
+				this.children = [];
+
+				this.add = function(x, y, z, object) {
+					if (this.has_split) {
+						this.addToChild(x, y, z, object);
+					} else if (this.object_count + 1 >= limit) {
+						this.split();
+						this.addToChild(x, y, z, object);
+					} else if (
+						   this.x <= x && x <= this.x+this.w
+						&& this.y <= y && y <= this.y+this.h
+						&& this.z <= z && z <= this.z+this.d
+					) {
+						this.objects[x+","+y+","+z] = object;
+						++this.object_count;
+					}
+				};
+				
+				this.split = function() {
+					this.children.push(new Octree(this.x,          this.w/2, this.y,          this.h/2, this.z,          this.d/2, this.limit));
+					this.children.push(new Octree(this.x+this.w/2, this.w/2, this.y,          this.h/2, this.z,          this.d/2, this.limit));
+					this.children.push(new Octree(this.x,          this.w/2, this.y+this.h/2, this.h/2, this.z,          this.d/2, this.limit));
+					this.children.push(new Octree(this.x+this.w/2, this.w/2, this.y+this.h/2, this.h/2, this.z,          this.d/2, this.limit));
+					this.children.push(new Octree(this.x,          this.w/2, this.y,          this.h/2, this.z+this.d/2, this.d/2, this.limit));
+					this.children.push(new Octree(this.x+this.w/2, this.w/2, this.y,          this.h/2, this.z+this.d/2, this.d/2, this.limit));
+					this.children.push(new Octree(this.x,          this.w/2, this.y+this.h/2, this.h/2, this.z+this.d/2, this.d/2, this.limit));
+					this.children.push(new Octree(this.x+this.w/2, this.w/2, this.y+this.h/2, this.h/2, this.z+this.d/2, this.d/2, this.limit));
+
+					this.has_split = true;
+
+					for (var coord in this.objects) {
+						var pos = coord.split(",");
+						this.addToChild(pos[0], pos[1], pos[2], this.objects[coord]);
+					}
+
+					this.objects = {};
+				};
+
+				this.addToChild = function(x, y, z, object) {
+					for (var i=0; i<this.children.length; ++i) {
+						this.children[i].add(x, y, z, object);
+					}
+				};
+			}
+
+			function octreeToEntities(game_screen, octree) {
+
+				// add octree to visualize
+				var to_visit = [octree];
+				while (to_visit.length > 0) {
+					var octree = to_visit.shift();
+					if (octree.has_split) {
+						for (var i=0; i<octree.children.length; ++i) {
+							to_visit.push(octree.children[i]);
+						}
+					} else {
+						var position = new TLORMEngine.Components.Position({ x: octree.x, y: octree.y, z: octree.z, w: octree.w, h: octree.h, d: octree.d });
+						var render = new TLORMEngine.Components.Render3D({ colour: 0, wireframe: true });
+						var entity = new TLORMEngine.Entities.Entity({
+							name: "octree"+position.x+"_"+position.y+"_"+position.z,
+							components: [ position, render ]
+						});
+						game_screen.entity_manager.addEntity(entity);
+					}
+				}					
+			}
+		</script>
+	</head>
+	<body>
+	</body>
+</html>

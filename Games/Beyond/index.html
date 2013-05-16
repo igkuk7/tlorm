@@ -1,0 +1,21 @@
+<html>
+	<head>
+		<title>TLORM Engine</title>
+		<style>
+			body { background: #ccc; }
+			canvas { background: #fff; }
+		</style>
+		<script type="text/javascript" src="../../all.js"></script>
+		<script type="text/javascript" src="Systems/BeyondGround.js"></script>
+		<script type="text/javascript">
+		var game;
+			window.onload = function() {
+				game = TLORMEngine.GameFromJSON('Beyond.json');
+				game.screen_manager.getGameScreen().system_manager.always_active_systems.BeyondGround = true;
+				
+				game.start();
+			};
+		</script>
+	</head>
+	<body></body>
+</html>

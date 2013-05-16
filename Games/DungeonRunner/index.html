@@ -1,0 +1,23 @@
+<html>
+	<head>
+		<title>TLORM Engine</title>
+		<style>
+			body { background: #ccc; }
+			canvas { background: #fff; }
+		</style>
+		<script type="text/javascript" src="../../all.js"></script>
+		<script type="text/javascript" src="Components/Dungeon.js"></script>
+		<script type="text/javascript" src="Components/DungeonRoom.js"></script>
+		<script type="text/javascript" src="Systems/Render2DDungeon.js"></script>
+		<script type="text/javascript">
+			window.onload = function() {
+				var game = TLORMEngine.GameFromJSON('DungeonRunner.json');
+
+				// generate
+
+				game.start();
+			};
+		</script>
+	</head>
+	<body></body>
+</html>

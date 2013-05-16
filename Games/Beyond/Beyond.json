@@ -1,0 +1,17 @@
+{
+	"name": "Beyond",
+	"width": 800,
+	"height": 600,
+	"screens": [
+		{ "name": "Game", "type": "GameScreen", "current_screen": "true" }
+	],
+	"entities": [
+		{
+			"name": "Sky",
+			"components": [
+				{ "type": "Position", "args": { "x": 0, "y": 0, "w": 800, "h": 600 } },
+				{ "type": "Render2D", "args": { "fill_colour": "#FFFFFF", "z": 1 } }
+			]
+		}
+	]
+}

@@ -1,0 +1,204 @@
+<html>
+	<head>
+		<title>TLORM Engine</title>
+		<style>
+			body { background: #ccc; }
+			canvas { background: #fff; }
+		</style>
+		<script type="text/javascript" src="../../all.js"></script>
+		<script type="text/javascript">
+		Math.seedrandom(1);
+			window.onload = function() {
+				var world = new World(600, 400);
+				world.objects.push(new Player(50, 10, 5, 5, "#F00", world));
+
+
+				function step() {
+					world.draw();
+					world.update();
+					requestAnimationFrame(step);
+				}
+				step();
+			};
+
+			function World(w, h) {
+				this.w = w;
+				this.h = h;
+				this.x = 0;
+				this.y = 0;
+				this.canvas = document.createElement("canvas");
+				this.canvas.width = this.w;
+				this.canvas.height = this.h;
+				this.context = this.canvas.getContext("2d");
+				document.body.appendChild(this.canvas);
+
+				this.variance = 2;
+				this.ground_positions = {};
+
+				this.objects = [];
+				this.gravity = 5;
+
+				this.update = function() {
+					for (var i=0; i<this.objects.length; ++i) {
+						this.objects[i].update();
+						this.objects[i].move(0, this.gravity);
+					}
+				};
+
+				this.colliding = function(object) {
+					var bottom_y = object.y+object.h;
+					for (var x=0; x<object.w; ++x) {
+						var world_y = this.ground_position(this.x+object.x+x);
+						if (bottom_y >= world_y) {
+							return true;
+						}
+					}
+
+					return false;
+				};
+
+				this.draw = function() {
+					this.context.clearRect(0, 0, this.w, this.h);
+					this.context.fillStyle = "#FFF";
+					this.context.fillRect(0, 0, this.w, this.h);
+
+					this.context.fillStyle = "#000";
+					this.context.beginPath();
+					this.context.moveTo(0, this.h);
+					for (var x=0; x<this.w; ++x) {
+						var y = this.ground_position(this.x+x);
+						this.context.lineTo(x, y);
+					}
+					this.context.lineTo(this.w-1, this.h);
+					this.context.lineTo(0, this.h);
+					this.context.fill();
+
+					for (var i=0; i<this.objects.length; ++i) {
+						this.objects[i].draw(this.context, this.x, this.y);
+					}
+				};
+
+				this.ground_position = function(x) {
+					if (!this.ground_positions[x]) {
+						var prev_x = this.ground_positions[x-1];
+						var next_x = this.ground_positions[x+1];
+						if (prev_x && next_x) {
+							this.ground_positions[x] = (prev_x + next_x) / 2;
+						} else if (prev_x) {
+							this.ground_positions[x] = prev_x + (-this.variance+Math.random()*this.variance*2);
+						} else if (next_x) {
+							this.ground_positions[x] = next_x + (-this.variance+Math.random()*this.variance*2);
+						} else {
+							this.ground_positions[x] = this.h - (Math.random()* this.h/2);
+						}
+
+						this.ground_positions[x] = Math.round(this.ground_positions[x]);
+					}
+					return this.ground_positions[x];
+				};
+			}
+
+			function Object(x, y, w, h, col, world) {
+				this.x = x;
+				this.y = y;
+				this.w = w;
+				this.h = h;
+				this.colour = col;
+				this.world = world;
+				this.on_ground = false;
+
+				this.update = function() {
+				};
+
+				this.move = function(x, y) {
+					if (x != 0 && y != 0) {
+						this.move(x, 0);
+						this.move(0, y);
+						return;
+					}
+
+					this.x += x;
+					this.y += y;
+					if (this.world.colliding(this)) {
+						this.x -= x;
+						this.y -= y;
+						this.on_ground = true;
+					} else if (this.y != 0) {
+						this.on_ground = false;
+					}
+				};
+
+				this.draw = function(context, x, y) {
+					context.fillStyle = this.colour;
+					context.fillRect(this.x+x, this.y+y, this.w, this.h);
+				};
+			}
+
+			function Player(x, y, w, h, col, world) {
+				extendObject(this, new Object(x, y, w, h, col, world));
+
+				this.keys_down = {};
+				var self = this;
+				document.addEventListener("keydown", function(e) {
+					self.keys_down[e.keyCode] = true;
+				});
+				document.addEventListener("keyup", function(e) {
+					self.keys_down[e.keyCode] = false;
+				});
+				document.addEventListener("blur", function(e) {
+					self.keys_down = {};
+				});
+
+				this.jumping = false;
+				this.initialJumpAcc = 20;
+				this.currentJumpAcc = 0;
+				this.currentJumpSpeed = 0;
+
+				this.update = function() {
+					if (this.keys_down[68]) {
+						this.move(1, 0);
+					} 
+					if (this.keys_down[65]) {
+						this.move(-1, 0);
+					} 
+					if (this.keys_down[32] && this.on_ground && !this.jumping) {
+						this.on_ground = false;
+						this.jumping = true;
+						this.currentJumpSpeed = 0;
+						this.currentJumpAcc = this.initialJumpAcc;
+					} 
+
+					if (this.jumping) {
+						this.on_ground = false;
+						if (this.currentJumpAcc > 0) {
+							this.currentJumpAcc -= this.world.gravity;
+							this.currentJumpSpeed += this.currentJumpAcc;
+						} else {
+							this.currentJumpAcc = 0;
+							this.currentJumpSpeed -= this.world.gravity
+						}
+
+						if (this.currentJumpSpeed > 0) {
+							this.move(0, -this.currentJumpSpeed);
+						} else {
+							this.currentJumpSpeed = 0;
+							this.jumping = false;
+						}
+					}
+
+					if (this.on_ground) {
+						this.jumping = false;
+					}
+				};
+			}
+
+			function extendObject(a, b) {
+				for (var key in b) {
+					a[key] = b[key];
+				}
+			}
+		</script>
+	</head>
+	<body>
+	</body>
+</html>

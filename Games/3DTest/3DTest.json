@@ -1,0 +1,47 @@
+{
+	"name": "3DTest",
+	"width": 800,
+	"height": 500,
+	"args": { "full_screen": "true" },
+	"screens": [
+		{ "name": "Game", "type": "GameScreen", "current_screen": "true", "args" : { "webgl": "true" } }
+	],
+	"systems": [ "Render3D", "Input", "Movement" ],
+	"entities": [
+		{
+			"name": "Camera",
+			"components": [
+				{ "type": "Position", "args": { "x": 3000, "y": 3000, "z": 5000, "angle_x": -0.5, "angle_y": 0.0, "angle_z": 0 } },
+				{ "type": "Camera", "args": {
+					"near": 1, 
+					"far": 100000,
+					"fov": 45
+				} },
+				{ "type": "KeyInput", "args": { "map": {
+					"65": { "name": "Velocity", "args": { "dx": -10 } },
+					"68": { "name": "Velocity", "args": { "dx":  10 } },
+					"87": { "name": "Velocity", "args": { "dz": -10 } },
+					"83": { "name": "Velocity", "args": { "dz":  10 } },
+					"69": { "name": "Velocity", "args": { "dy": -10 } },
+					"81": { "name": "Velocity", "args": { "dy":  10 } }
+				} } }
+			]
+		},
+		{
+			"name": "light1",
+			"components": [
+				{ "type": "Position", "args": { "x": 4000, "y": 2000, "z": 5000, "angle_x": -0.5 } },
+				{ "type": "Render3D", "args": { "colour": "0xefefef" } },
+				{ "type": "Light", "args": { "light_type": "Spot" } }
+			]
+		},
+		{
+			"name": "ground",
+			"components": [
+				{ "type": "Position", "args": { "x": 0, "y": 0, "z": 0, "w": 5000, "h": 2000, "d": 5000 } },
+				{ "type": "Render3D", "args": { "colour": "0x11ee44" } },
+				{ "type": "Landscape", "args": { "size": 50 } }
+			]
+		}
+	]
+}

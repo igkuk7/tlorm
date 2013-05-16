@@ -1,0 +1,134 @@
+{
+	"name": "Platformer",
+	"width": 800,
+	"height": 600,
+	"screens": [ { "type": "GameScreen", "name": "Game", "args": { "class": "Game" } } ],
+	"entities": [
+		{
+			"name": "Sky",
+			"components": [
+				{ "type": "Position", "args": { "x": 0, "y": 0, "w": 800, "h": 600 } },
+				{ "type": "Render2D", "args": { "fill_colour": "#00CCFF", "z": 1 } }
+			]
+		},
+		{
+			"name": "Ground",
+			"components": [
+				{ "type": "Position", "args": { "x": 0, "y": 550, "w": 800, "h": 50 } },
+				{ "type": "Render2D", "args": { "fill_colour": "#660000", "z": 2 } },
+				{ "type": "Collision", "args": { "group": "platform", "groups": [] } }
+			]
+		},
+		{
+			"name": "Platform 1",
+			"components": [
+				{ "type": "Position", "args": { "x": 50, "y": 490, "w": 200, "h": 30 } },
+				{ "type": "Render2D", "args": { "fill_colour": "#660000", "z": 2 } },
+				{ "type": "Collision", "args": { "group": "platform", "groups": [] } }
+			]
+		},
+		{
+			"name": "Platform 2",
+			"components": [
+				{ "type": "Position", "args": { "x": 300, "y": 430, "w": 200, "h": 30 } },
+				{ "type": "Render2D", "args": { "fill_colour": "#660000", "z": 2 } },
+				{ "type": "Collision", "args": { "group": "platform", "groups": [] } }
+			]
+		},
+		{
+			"name": "Platform 3",
+			"components": [
+				{ "type": "Position", "args": { "x": 550, "y": 370, "w": 200, "h": 30 } },
+				{ "type": "Render2D", "args": { "fill_colour": "#660000", "z": 2 } },
+				{ "type": "Collision", "args": { "group": "platform", "groups": [] } }
+			]
+		},
+		{
+			"name": "Platform 4",
+			"components": [
+				{ "type": "Position", "args": { "x": 300, "y": 310, "w": 200, "h": 30 } },
+				{ "type": "Render2D", "args": { "fill_colour": "#660000", "z": 2 } },
+				{ "type": "Collision", "args": { "group": "platform", "groups": [] } }
+			]
+		},
+		{
+			"name": "Platform 5",
+			"components": [
+				{ "type": "Position", "args": { "x": 50, "y": 250, "w": 200, "h": 30 } },
+				{ "type": "Render2D", "args": { "fill_colour": "#660000", "z": 2 } },
+				{ "type": "Collision", "args": { "group": "platform", "groups": [] } }
+			]
+		},
+		{
+			"name": "Platform 6",
+			"components": [
+				{ "type": "Position", "args": { "x": 300, "y": 190, "w": 200, "h": 30 } },
+				{ "type": "Render2D", "args": { "fill_colour": "#660000", "z": 2 } },
+				{ "type": "Collision", "args": { "group": "platform", "groups": [] } }
+			]
+		},
+		{
+			"name": "Platform 7",
+			"components": [
+				{ "type": "Position", "args": { "x": 550, "y": 130, "w": 200, "h": 30 } },
+				{ "type": "Render2D", "args": { "fill_colour": "#660000", "z": 2 } },
+				{ "type": "Collision", "args": { "group": "platform", "groups": [] } }
+			]
+		},
+		{
+			"name": "Platform 8",
+			"components": [
+				{ "type": "Position", "args": { "x": 300, "y": 70, "w": 200, "h": 30 } },
+				{ "type": "Render2D", "args": { "fill_colour": "#660000", "z": 2 } },
+				{ "type": "Collision", "args": { "group": "platform", "groups": [] } }
+			]
+		},
+
+		{
+			"name": "Player",
+			"components": [
+				{ "type": "Position", "args": { "x": 20, "y": 300, "w": 20, "h": 50 } },
+				{ "type": "Render2D", "args": { "fill_colour": "#FF9933", "z": 3 } },
+				{ "type": "MouseInput", "args": { 
+					"move2": { "type": "Translation", "args": { "move_middle": "true", "speed": 20, "acceleration": 5 }, "mouseXParam": "x", "remove_existing": true },
+					"click2": { "type": "Velocity", "args": { "dy": -60, "constant": true } }
+				} }, 
+				{ "type": "TouchInput", "args": { 
+					"drag2": { "type": "Translation", "args": { "move_middle": "true", "speed": 20, "acceleration": 5 }, "mouseXParam": "x", "remove_existing": true }
+				} }, 
+				{ "type": "KeyInput", "args": { "map": {
+					"38": [
+						{ "type": "Velocity", "args": { "dy": -10, "ay": 1 } },
+						{ "edit": true, "type": "Data", "function": "setData", "function_args": ["jumping", true ] }
+					],
+					"40": [
+						{ "type": "Velocity", "args": { "dy": 10 } },
+						{ "edit": true, "type": "Data", "function": "setData", "function_args": ["jumping", false ] }
+					],
+					"37": [ { "type": "Velocity", "args": { "dx": -10 } } ],
+					"39": [ { "type": "Velocity", "args": { "dx": 10 } } ],
+					"90": [ {
+						"new_entity": true,
+						"entity": {
+							"name": "Bullet",
+							"components": [
+								{ "type": "Position", "args": { "x": 300, "y": 70, "w": 200, "h": 30 } },
+								{ "type": "Render2D", "args": { "fill_colour": "#660000", "z": 2 } },
+								{ "type": "Collision", "args": { "group": "platform", "groups": [] } }
+							]
+						}
+					} ]
+				} } }, 
+				{ "type": "Collision", "args": { "group": "player", "groups": [ "platform" ], "resolution": "edit_component", "component": "Data", "function": "setData", "function_args": ["jumping", false ]  } },
+				{ "type": "Collision", "args": { "group": "player", "groups": [ "platform" ], "resolution": "push" } },
+				{ "type": "Data", "args": { "jumping": false } }
+			]
+		}
+	],
+	"conditions": [
+		{
+			"name": "not_jumping",
+			"args": { "type": "Data", "function": "getData", "function_args": ["jumping"], "check": "=", "value": false }
+		}
+	]
+}
