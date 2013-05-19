@@ -7,6 +7,7 @@ use File::Slurp;
 my $combined_file = 'all.js';
 my $minified_file = $combined_file;
 $minified_file =~ s/\.js/\-min.js/g;
+my $log_file = "$combined_file.log";
 
 if ( -f $combined_file )
 {
@@ -16,6 +17,12 @@ if ( -f $minified_file )
 {
 	move($minified_file, "$minified_file.old");
 }
+if ( -f $log_file )
+{
+	move($log_file, "$log_file.old");
+}
+
+open my $log, '>', $log_file;
 
 # main js dir
 my $js_dir = 'js';
@@ -36,7 +43,7 @@ while ( my $f = pop(@to_visit) )
 	while ( @in_dirs && ! -e "$in_dirs[$#in_dirs]->{path}/$name" )
 	{
 		my $dir = pop(@in_dirs);
-		print "Leaving Directory: $dir->{path}\n";
+		print $log "Leaving Directory: $dir->{path}\n";
 	}
 
 	# for each dir setup 'packages'
@@ -44,7 +51,7 @@ while ( my $f = pop(@to_visit) )
 	{
 		# add package for dir
 		push(@in_dirs, { path => $f, name => $name });
-		print "Entering Directory: $name\n";
+		print $log "Entering Directory: $name\n";
 		push(@to_visit, glob "$f\/*");
 		
 		# first package needs var, rest are within it
@@ -58,7 +65,7 @@ while ( my $f = pop(@to_visit) )
 	}
 	elsif (-f $f)
 	{
-		print "Processing File: $f\n";
+		print $log "Processing File: $f\n";
 		my $combine = 1;
 			
 		# check for dependencies
@@ -70,7 +77,7 @@ while ( my $f = pop(@to_visit) )
 			
 			# found some, postpone dealing with this file
 			if (@missing) {
-				print "Dependent on: ".join(',', @missing)."\n";
+				print $log "Dependent on: ".join(',', @missing)."\n";
 				map { push(@{$wait_for{$_}}, $f)} @missing;
 				$combine = 0;
 			}
@@ -95,7 +102,7 @@ while ( my $f = pop(@to_visit) )
 
 while ( my $dir = pop(@in_dirs) )
 {
-	print "Leaving Directory: $dir->{path}\n";
+	print $log "Leaving Directory: $dir->{path}\n";
 }
 
 
@@ -113,6 +120,7 @@ $file_contents
 JS_FILE_END
 
 close $fh or die $!;
+close $log or die $!;
 
 print "Combined files into $combined_file\n";
 

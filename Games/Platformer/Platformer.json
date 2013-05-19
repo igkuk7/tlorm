@@ -89,6 +89,7 @@
 			"components": [
 				{ "type": "Position", "args": { "x": 20, "y": 300, "w": 20, "h": 50 } },
 				{ "type": "Render2D", "args": { "fill_colour": "#FF9933", "z": 3 } },
+				{ "type": "Gravity", "args": { "g": 2, "terminal_velocity": 15 } },
 				{ "type": "MouseInput", "args": { 
 					"move2": { "type": "Translation", "args": { "move_middle": "true", "speed": 20, "acceleration": 5 }, "mouseXParam": "x", "remove_existing": true },
 					"click2": { "type": "Velocity", "args": { "dy": -60, "constant": true } }
@@ -97,16 +98,17 @@
 					"drag2": { "type": "Translation", "args": { "move_middle": "true", "speed": 20, "acceleration": 5 }, "mouseXParam": "x", "remove_existing": true }
 				} }, 
 				{ "type": "KeyInput", "args": { "map": {
-					"38": [
-						{ "type": "Velocity", "args": { "dy": -10, "ay": 1 } },
-						{ "edit": true, "type": "Data", "function": "setData", "function_args": ["jumping", true ] }
+					"pressed_38": [
+						{ "type": "Velocity", "args": { "dy": -40, "ay": -5 }, "conditions": ["not_jumping", "is_standing"] },
+						{ "edit": true, "type": "Data", "function": "setData", "function_args": ["jumping", true ], "conditions": ["not_jumping", "is_standing"] },
+						{ "edit": true, "type": "Data", "function": "setData", "function_args": ["standing", false ], "conditions": ["is_jumping"] }
 					],
-					"40": [
+					"140": [
 						{ "type": "Velocity", "args": { "dy": 10 } },
 						{ "edit": true, "type": "Data", "function": "setData", "function_args": ["jumping", false ] }
 					],
-					"37": [ { "type": "Velocity", "args": { "dx": -10 } } ],
-					"39": [ { "type": "Velocity", "args": { "dx": 10 } } ],
+					"37": [ { "type": "Velocity", "args": { "dx": -5 } } ],
+					"39": [ { "type": "Velocity", "args": { "dx": 5 } } ],
 					"90": [ {
 						"new_entity": true,
 						"entity": {
@@ -119,9 +121,11 @@
 						}
 					} ]
 				} } }, 
-				{ "type": "Collision", "args": { "group": "player", "groups": [ "platform" ], "resolution": "edit_component", "component": "Data", "function": "setData", "function_args": ["jumping", false ]  } },
+				{ "type": "Collision", "args": { "group": "player", "groups": [ "platform" ], "resolution": "edit_component", "component": "Data", "function": "setData", "function_args": [ "jumping", false ], "conditions": ["is_jumping"]  } },
+				{ "type": "Collision", "args": { "group": "player", "groups": [ "platform" ], "resolution": "edit_component", "component": "Data", "function": "setData", "function_args": [ "standing", true ], "conditions": ["not_standing", "has_landed"]  } },
+				{ "type": "Collision", "args": { "group": "player", "groups": [ "platform" ], "resolution": "edit_component", "component": "Velocity", "function": "set", "function_args": [ null, 0, null ], "conditions": ["not_standing"]  } },
 				{ "type": "Collision", "args": { "group": "player", "groups": [ "platform" ], "resolution": "push" } },
-				{ "type": "Data", "args": { "jumping": false } }
+				{ "type": "Data", "args": { "jumping": false, "standing": false } }
 			]
 		}
 	],
@@ -129,6 +133,22 @@
 		{
 			"name": "not_jumping",
 			"args": { "type": "Data", "function": "getData", "function_args": ["jumping"], "check": "=", "value": false }
+		},
+		{
+			"name": "is_jumping",
+			"args": { "type": "Data", "function": "getData", "function_args": ["jumping"], "check": "=", "value": true }
+		},
+		{
+			"name": "not_standing",
+			"args": { "type": "Data", "function": "getData", "function_args": ["standing"], "check": "=", "value": false }
+		},
+		{
+			"name": "is_standing",
+			"args": { "type": "Data", "function": "getData", "function_args": ["standing"], "check": "=", "value": true }
+		},
+		{
+			"name": "has_landed",
+			"args": { "type": "Position", "function": "direction", "function_args": [], "check": "=", "value": "down" }
 		}
 	]
 }

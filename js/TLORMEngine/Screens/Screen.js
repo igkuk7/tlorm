@@ -272,6 +272,10 @@ TLORMEngine.Screens.Screen.prototype.getActiveComponents = function() {
 	return this.entity_manager.getActiveComponents(this)
 };
 
+TLORMEngine.Screens.Screen.prototype.getAllComponents = function(type) {
+	return this.entity_manager.getAllComponents(this, type)
+};
+
 TLORMEngine.Screens.Screen.prototype.addEntity = function(entity) {
 	this.entity_manager.addEntity(entity);
 };

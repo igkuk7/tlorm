@@ -1,6 +1,7 @@
 
 /* just type in main component */
 TLORMEngine.Components.Component = function(args) {
+	this.id = null;
 	this.type = args.type || 'Component';
 	this.multiple = args.multiple || false;
 
@@ -9,6 +10,7 @@ TLORMEngine.Components.Component = function(args) {
 
 TLORMEngine.Components.Component.prototype.args_schema = function () {
 	return {
+		conditions: { type: "array", default: null },
 	};
 }
 TLORMEngine.Components.Component.prototype.setArgs = function(args) {

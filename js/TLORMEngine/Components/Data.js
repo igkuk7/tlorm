@@ -30,6 +30,7 @@ TLORMEngine.Components.Data.prototype.getData = function(key) {
 
 TLORMEngine.Components.Data.prototype.setData = function(key, value) {
 	this.data[key] = value;
+	console.log(key+" = "+value);
 };
 
 TLORMEngine.Components.Data.prototype.addToData = function(key, value) {

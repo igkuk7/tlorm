@@ -1,5 +1,6 @@
 TLORMEngine.EntityManager = function() {
-	this.next_id = 1;
+	this.next_entity_id = 1;
+	this.next_component_id = 1;
 	this.all_screens = 'TLORM_ALL_SCREENS';
 	this.entities_by_screen = {};
 	this.entities_by_type = {};
@@ -17,7 +18,7 @@ TLORMEngine.EntityManager.prototype.addEntity = function(entity) {
 };
 
 TLORMEngine.EntityManager.prototype._addEntity = function(entity) {
-	entity.id = this.next_id++;
+	entity.id = this.next_entity_id++;
 
 	var screens = entity.screens;
 	if (!screens || screens.length == 0) {
@@ -47,6 +48,10 @@ TLORMEngine.EntityManager.prototype._addEntity = function(entity) {
 	this.entities_by_name[entity.name] = entity;
 
 	entity.initAllComponents(true);
+	for (var i = 0; i < entity.components.length; ++i) {
+		entity.components[i].id = this.next_component_id++;
+	}
+
 	return entity;
 };
 
@@ -185,6 +190,41 @@ TLORMEngine.EntityManager.prototype.getActiveComponents = function(screen) {
 	return components;
 };
 
+TLORMEngine.EntityManager.prototype.getAllComponents = function(screen, type) {
+	var components_found = {};
+	var components = []
+	if (this.entities_by_type[screen.name] && this.entities_by_type[screen.name][type]) {
+		for (var i=0; i < this.entities_by_type[screen.name][type].length; ++i) {
+			var component = this.entities_by_type[screen.name][type][i].getComponentByType(type);
+			if (!(component instanceof Array)) {
+				component = [ component ];
+			}
+			for (var i=0; i<component.length; ++i) {
+				if (!components_found[component[i].id]) {
+					components_found[component[i].id] = true;
+					components.push(component[i]);
+				}
+			}
+		}
+	}
+	if (this.entities_by_type[this.all_screens] && this.entities_by_type[this.all_screens][type]) {
+		for (var i=0; i < this.entities_by_type[this.all_screens][type].length; ++i) {
+			var component = this.entities_by_type[this.all_screens][type][i].getComponentByType(type);
+			if (!(component instanceof Array)) {
+				component = [ component ];
+			}
+			for (var i=0; i<component.length; ++i) {
+				if (!components_found[component[i].id]) {
+					components_found[component[i].id] = true;
+					components.push(component[i]);
+				}
+			}
+		}
+	}
+
+	return components;
+};
+
 TLORMEngine.EntityManager.prototype.addEntityComponent = function(entity, component) {
 	this.entity_components_to_add.push({
 		entity : entity,
@@ -195,6 +235,7 @@ TLORMEngine.EntityManager.prototype.addEntityComponent = function(entity, compon
 TLORMEngine.EntityManager.prototype._addEntityComponent = function(entity, component) {
 	if (this.entities_by_id[entity.id]) {
 		entity.addComponent(component);
+		component.id = this.next_component_id++;
 
 		var screens = entity.screens;
 		if (!screens || screens.length == 0) {

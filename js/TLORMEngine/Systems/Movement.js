@@ -29,6 +29,9 @@ TLORMEngine.Systems.Movement.prototype.init = function(screen, reset) {
 
 TLORMEngine.Systems.Movement.prototype.update = function(screen, delta) {
 
+	// accelerate all velocities
+	screen.getAllComponents("Velocity").map(function(v) { v.accelerate(); });
+
 	// apply gravity to all entities which need it prior to movements
 	var entities = screen.getEntitiesByTypes(["Position", "Gravity"]);
 	for (var i = 0; i < entities.length; ++i) {
@@ -74,11 +77,13 @@ TLORMEngine.Systems.Movement.prototype.applyGravity = function(screen, entity, d
 		add_gravity = true;
 		for (var i = 0; i < velocities.length; ++i) {
 			var velocity = velocities[i];
-			if (velocity.dy != null || velocity.dy != undefined) {
-				velocity.dy += gravity.g;
+			var vdy = velocity.getDY();
+			if (vdy != null || vdy != undefined) {
+				velocity.change(null, gravity.g);
+				vdy = velocity.getDY();
 				add_gravity = false;
-				if (velocity.dy > 0 && velocity.dy > gravity.terminal_velocity) {
-					velocity.dy = gravity.terminal_velocity;
+				if (vdy > 0 && vdy > gravity.terminal_velocity) {
+					velocity.set(null, gravity.terminal_velocity);
 				}
 			}
 		}
@@ -101,9 +106,9 @@ TLORMEngine.Systems.Movement.prototype.moveEntity = function(screen, entity, col
 	var dz = 0;
 	for (var i = 0; i < velocities.length; ++i) {
 		var velocity = velocities[i];
-		var vdx = Math.round( velocity.skip_delta ? velocity.dx : this.deltaMovement(velocity.dx, delta) ) || 0;
-		var vdy = Math.round( velocity.skip_delta ? velocity.dy : this.deltaMovement(velocity.dy, delta) ) || 0;
-		var vdz = Math.round( velocity.skip_delta ? velocity.dz : this.deltaMovement(velocity.dz, delta) ) || 0;
+		var vdx = Math.round( velocity.skip_delta ? velocity.getDX() : this.deltaMovement(velocity.getDX(), delta) ) || 0;
+		var vdy = Math.round( velocity.skip_delta ? velocity.getDY() : this.deltaMovement(velocity.getDY(), delta) ) || 0;
+		var vdz = Math.round( velocity.skip_delta ? velocity.getDZ() : this.deltaMovement(velocity.getDZ(), delta) ) || 0;
 		dx += vdx;
 		dy += vdy;
 		dz += vdz;
@@ -367,6 +372,11 @@ TLORMEngine.Systems.Movement.prototype.checkCollision = function(screen, entity,
 };
 
 TLORMEngine.Systems.Movement.prototype.collisionResolution = function(screen, entity, hit_entity, collision, hit_collision) {
+	// check resolution conditions and skip if not passed
+	if (collision.conditions && !screen.check_conditions(entity, collision.conditions)) {
+		return;
+	}
+
 	var position = entity.getComponentByType("Position");
 	var hit_position = hit_entity.getComponentByType("Position");
 	if (collision.resolution == "bounce" || collision.resolution == "destroy_hit_and_bounce") {
@@ -376,11 +386,11 @@ TLORMEngine.Systems.Movement.prototype.collisionResolution = function(screen, en
 				switch (position.collisionDirection(hit_position)) {
 					case "top":
 					case "bottom":
-						velocity.dy *= -1;
+						velocity.set(null, velocity.getDY() * -1);
 						break;
 					case "left":
 					case "right":
-						velocity.dx *= -1;
+						velocity.set(velocity.getDX() * -1, null);
 						break;
 					default:
 						break;
@@ -398,19 +408,19 @@ TLORMEngine.Systems.Movement.prototype.collisionResolution = function(screen, en
 			switch (direction) {
 				case "up":
 					position.moveBy(0, 1);
-					velocities.filter(function(v){ return v.dy && v.dy < 0; }).map(function(v) { v.dy = null; });
+					velocities.filter(function(v){ return v.getDY() && v.getDY() < 0; }).map(function(v) { v.set(null, 0); });
 					break;
 				case "down":
 					position.moveBy(0, -1);
-					velocities.filter(function(v){ return v.dy && v.dy > 0; }).map(function(v) { v.dy = null; });
+					velocities.filter(function(v){ return v.getDY() && v.getDY() > 0; }).map(function(v) { v.set(null, 0); });
 					break;
 				case "left":
 					position.moveBy(1, 0);
-					velocities.filter(function(v){ return v.dx && v.dx < 0; }).map(function(v) { v.dx = null; });
+					velocities.filter(function(v){ return v.getDX() && v.getDX() < 0; }).map(function(v) { v.set(0, null); });
 					break;
 				case "right":
 					position.moveBy(-1, 0);
-					velocities.filter(function(v){ return v.dx && v.dx > 0; }).map(function(v) { v.dx = null; });
+					velocities.filter(function(v){ return v.getDX() && v.getDX() > 0; }).map(function(v) { v.set(0, null);  });
 					break;
 				default:
 					stop = true
@@ -446,7 +456,12 @@ TLORMEngine.Systems.Movement.prototype.collisionResolution = function(screen, en
 		}
 		for (var i=0; i<components_to_edit.length; ++i) {
 			var component_to_edit = components_to_edit[i];
-			component_to_edit[collision.function].apply(component_to_edit, collision.function_args);
+			if (!(component_to_edit instanceof Array)) {
+				component_to_edit = [ component_to_edit ];
+			}
+			for (var i=0; i<component_to_edit.length; ++i) {
+				component_to_edit[i][collision.function].apply(component_to_edit[i], collision.function_args);
+			}
 		}
 	}
 	if (collision.resolution == "add_component") {

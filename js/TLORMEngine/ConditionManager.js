@@ -11,6 +11,9 @@ TLORMEngine.ConditionManager.prototype.check_conditions = function(entity, condi
 	var expected = conditions.length;
 	var found = 0;
 	for (var i=0; i<conditions.length; ++i) {
+		if (!this.conditions_by_name[conditions[i]]) {
+			throw "Unknown Condition: "+conditions[i];
+		}
 		if (this.conditions_by_name[conditions[i]].isTrue(entity)) {
 			++found;
 		}

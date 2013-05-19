@@ -4,6 +4,7 @@ TLORMEngine.Systems.Input = function(args) {
 	TLORMEngine.Systems.System.call(this, args);
 
 	this.keys_down = {};
+	this.keys_pressed = {};
 	this.mouse_move = null;
 	this.mouse_click = null;
 	this.touch_move = null;
@@ -50,9 +51,13 @@ TLORMEngine.Systems.Input.prototype.init = function(screen, reset) { /* register
 
 TLORMEngine.Systems.Input.prototype.keyDownHandler = function(event) {
 	this.keys_down[event.keyCode] = true;
+	delete this.keys_pressed[event.keyCode];
 };
 TLORMEngine.Systems.Input.prototype.keyUpHandler = function(event) {
-	delete this.keys_down[event.keyCode];
+	if (this.keys_down[event.keyCode]) {
+		this.keys_pressed[event.keyCode] = true;
+		delete this.keys_down[event.keyCode];
+	}
 };
 TLORMEngine.Systems.Input.prototype.mouseClickHandler = function(event) {
 	this.mouse_click = event;
@@ -99,29 +104,41 @@ TLORMEngine.Systems.Input.prototype.update = function(screen) {
 
 TLORMEngine.Systems.Input.prototype.handleKeyInput = function(screen, entity) {
 	var input = entity.getComponentByType("KeyInput");
-	for(var key_code in this.keys_down) {
-		if(input.map[key_code]) {
-			for (var i=0; i<input.map[key_code].length; ++i) {
-				var key_input = input.map[key_code][i];
-				if (!key_input.conditions || screen.check_conditions(entity, key_input.conditions)) {
-					if (key_input.edit) {
-						var component = entity.getComponentByType(key_input.type);
-						component[key_input.function].apply(component, this.translateArgs(entity, key_input.function_args));
-					} else if (key_input.new_entity) {
-						var entity_components = key_input.entity.components || [];
-						var components = [];
-						for (var j=0; j<entity_components.length; ++j) {
-							components.push(new TLORMEngine.Components[entity_components[j].type](this.translateArgs(entity, entity_components[j].args) || {}));
-						}
-						var entity = new TLORMEngine.Entities.Entity({ name: key_input.entity.name, components: components, screens: key_input.entity.screens });
-						screen.addEntity(entity);
-					} else {
-						screen.addEntityComponent(
-							entity,
-							new TLORMEngine.Components[key_input.type](this.translateArgs(entity, key_input.args))
-						);
-					}
+	for (var key_code in input.map) {
+		if (key_code.indexOf("pressed_") != -1) {
+			if(this.keys_pressed[key_code.substring(8)]) {
+				this.handleSingleKeyInput(screen, entity, input.map[key_code]);
+				delete this.keys_pressed[key_code.substring(8)];
+			}
+		} else {
+			if(this.keys_down[key_code]) {
+				this.handleSingleKeyInput(screen, entity, input.map[key_code]);
+			}
+		}
+	}
+};
+
+
+TLORMEngine.Systems.Input.prototype.handleSingleKeyInput = function(screen, entity, key_map) {
+	for (var i=0; i<key_map.length; ++i) {
+		var key_input = key_map[i];
+		if (!key_input.conditions || screen.check_conditions(entity, key_input.conditions)) {
+			if (key_input.edit) {
+				var component = entity.getComponentByType(key_input.type);
+				component[key_input.function].apply(component, key_input.function_args);
+			} else if (key_input.new_entity) {
+				var entity_components = key_input.entity.components || [];
+				var components = [];
+				for (var j=0; j<entity_components.length; ++j) {
+					components.push(new TLORMEngine.Components[entity_components[j].type](this.translateArgs(entity, entity_components[j].args) || {}));
 				}
+				var entity = new TLORMEngine.Entities.Entity({ name: key_input.entity.name, components: components, screens: key_input.entity.screens });
+				screen.addEntity(entity);
+			} else {
+				screen.addEntityComponent(
+					entity,
+					new TLORMEngine.Components[key_input.type](this.translateArgs(entity, key_input.args))
+				);
 			}
 		}
 	}
@@ -170,7 +187,7 @@ TLORMEngine.Systems.Input.prototype.handleMouseInput = function(screen, entity) 
 		if(this.last_click_component[entity.name]) {
 			var components = entity.getComponentByType(input.click.type);
 			if (components) {
-				if (!components instanceof Array ) {
+				if (!(components instanceof Array)) {
 					components = [ components ];
 				}
 				for (var i=0; i<components.length; ++i) {
@@ -249,7 +266,7 @@ TLORMEngine.Systems.Input.prototype.handleTouchInput = function(screen, entity) 
 		if(this.last_click_component[entity.name]) {
 			var components = entity.getComponentByType(input.click.type);
 			if (components) {
-				if (!components instanceof Array ) {
+				if (!(components instanceof Array)) {
 					components = [ components ];
 				}
 				for (var i=0; i<components.length; ++i) {
