@@ -55,7 +55,7 @@ TLORMEngine.Components.Velocity.prototype.getDZ = function() {
 
 TLORMEngine.Components.Velocity.prototype.accelerate = function() {
 	if (this.stopped) {
-		return;
+		return;	
 	}
 	if (this.ax != null) {
 		this.cdx += this.ax;

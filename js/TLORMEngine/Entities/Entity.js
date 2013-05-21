@@ -11,6 +11,14 @@ TLORMEngine.Entities.Entity = function(args) {
 	for (var i = 0; i < incoming_components.length; ++i) {
 		this.addComponent(incoming_components[i]);
 	}
+
+	// if we have args then call init
+	if (args.name) {
+		this.init(args);
+	}
+};
+
+TLORMEngine.Entities.Entity.prototype.init = function(args) {
 };
 
 TLORMEngine.Entities.Entity.prototype.addComponent = function(component) {
@@ -27,6 +35,7 @@ TLORMEngine.Entities.Entity.prototype.addComponent = function(component) {
 		this.components.push(component);
 		this.components_by_type[component.type] = component;
 	}
+	return component;
 };
 
 TLORMEngine.Entities.Entity.prototype.removeComponent = function(component) {

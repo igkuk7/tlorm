@@ -11,6 +11,7 @@ TLORMEngine.Systems.Input = function(args) {
 	this.touch_click = null;
 	this.last_click_component = {};
 	this.last_touch_component = {};
+	this.key_pressed_threshold = 500;
 }
 // inherit from normal system
 TLORMEngine.Systems.Input.extends(TLORMEngine.Systems.System);
@@ -51,11 +52,15 @@ TLORMEngine.Systems.Input.prototype.init = function(screen, reset) { /* register
 
 TLORMEngine.Systems.Input.prototype.keyDownHandler = function(event) {
 	this.keys_down[event.keyCode] = true;
-	delete this.keys_pressed[event.keyCode];
+	if (   !this.keys_pressed[event.keyCode]
+		|| (new Date().getTime() - this.keys_pressed[event.keyCode]) > this.key_pressed_threshold
+	) {
+		this.keys_pressed[event.keyCode] = new Date().getTime();
+		console.log(event.keyCode);
+	}
 };
 TLORMEngine.Systems.Input.prototype.keyUpHandler = function(event) {
 	if (this.keys_down[event.keyCode]) {
-		this.keys_pressed[event.keyCode] = true;
 		delete this.keys_down[event.keyCode];
 	}
 };

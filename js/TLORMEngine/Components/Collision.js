@@ -29,6 +29,7 @@ TLORMEngine.Components.Collision.prototype.args_schema = function () {
 		group: { type: "string", default: "no_group" },
 		groups: { type: "array", default: "no_groups" },
 		oncollide: { type: "object", default: null },
+		resolutions: { type: "object", default: [] },
 		resolution: { enum: this.resolutions, default: "" },
 		entity: { type: "string", default: "" },
 		component: { type: "string" },

@@ -363,23 +363,33 @@ TLORMEngine.Systems.Movement.prototype.checkCollision = function(screen, entity,
 	var collided = 0;
 	for (var c = 0; c < check_collisions.length; c++) {
 		var check_collision = check_collisions[c];
-		if (collision.collidingDirection(position) && collision.collides(check_collision) && position.collides(check_position)) {
-			this.collisionResolution(screen, entity, check_entity, collision, check_collision);
+		if (   collision.collidingDirection(position)
+			&& collision.collides(check_collision)
+			&& position.collides(check_position)
+		) {
+			// run checks then run the resolutions
+			var resolutions_to_run = [];
+			for (var ri=0; ri<collision.resolutions.length; ++ri) {
+				var resolution = collision.resolutions[ri];
+				if ( !resolution.conditions || screen.check_conditions(entity, resolution.conditions) ) {
+					resolutions_to_run.push(resolution);
+				}
+			}
+			for (var ri=0; ri<resolutions_to_run.length; ++ri) {
+				var resolution = resolutions_to_run[ri];
+				this.collisionResolution(screen, entity, check_entity, collision, check_collision, resolution);
+			}
+
 			++collided;
 		}
 	}
 	return collided;
 };
 
-TLORMEngine.Systems.Movement.prototype.collisionResolution = function(screen, entity, hit_entity, collision, hit_collision) {
-	// check resolution conditions and skip if not passed
-	if (collision.conditions && !screen.check_conditions(entity, collision.conditions)) {
-		return;
-	}
-
+TLORMEngine.Systems.Movement.prototype.collisionResolution = function(screen, entity, hit_entity, collision, hit_collision, resolution) {
 	var position = entity.getComponentByType("Position");
 	var hit_position = hit_entity.getComponentByType("Position");
-	if (collision.resolution == "bounce" || collision.resolution == "destroy_hit_and_bounce") {
+	if (resolution.resolution == "bounce" || resolution.resolution == "destroy_hit_and_bounce") {
 		var velocity = entity.getComponentByType("Velocity")[0];
 		if (velocity) {
 			if (velocity.constant) {
@@ -398,7 +408,7 @@ TLORMEngine.Systems.Movement.prototype.collisionResolution = function(screen, en
 			}
 		}
 	}
-	if (collision.resolution == "push") {
+	if (resolution.resolution == "push") {
 		var direction = position.direction();
 		var stop = false;
 
@@ -428,25 +438,25 @@ TLORMEngine.Systems.Movement.prototype.collisionResolution = function(screen, en
 			}
 		}
 	}
-	if (collision.resolution == "stop") {
+	if (resolution.resolution == "stop") {
 		screen.removeEntityComponentByType(entity, "Velocity");
 	}
-	if (collision.resolution == "destroy_hit" || collision.resolution == "destroy_hit_and_bounce") {
+	if (resolution.resolution == "destroy_hit" || resolution.resolution == "destroy_hit_and_bounce") {
 		screen.removeEntity(hit_entity);
 	}
-	if (collision.resolution == "destroy") {
+	if (resolution.resolution == "destroy") {
 		screen.removeEntity(entity);
 	}
-	if (collision.resolution == "destroy_both") {
+	if (resolution.resolution == "destroy_both") {
 		screen.removeEntity(hit_entity);
 		screen.removeEntity(entity);
 	}
-	if (collision.resolution == "edit_component") {
-		var edit_entity = ( collision.entity ? screen.getEntityByName(collision.entity) : entity );
-		var edit_component = edit_entity.getComponentByType(collision.component);
+	if (resolution.resolution == "edit_component") {
+		var edit_entity = ( resolution.entity ? screen.getEntityByName(resolution.entity) : entity );
+		var edit_component = edit_entity.getComponentByType(resolution.component);
 		var components_to_edit = [];
-		if (collision.position) {
-			if (collision.position == "all") {
+		if (resolution.position) {
+			if (resolution.position == "all") {
 				components_to_edit = edit_component;
 			} else {
 				components_to_edit = [edit_component[position]];
@@ -460,22 +470,22 @@ TLORMEngine.Systems.Movement.prototype.collisionResolution = function(screen, en
 				component_to_edit = [ component_to_edit ];
 			}
 			for (var i=0; i<component_to_edit.length; ++i) {
-				component_to_edit[i][collision.function].apply(component_to_edit[i], collision.function_args);
+				component_to_edit[i][resolution.function].apply(component_to_edit[i], resolution.function_args);
 			}
 		}
 	}
-	if (collision.resolution == "add_component") {
-		var entity = ( collision.entity ? screen.getEntityByName(collision.entity) : entity );
-		var component = new TLORMEngine.Components[collision.component](collision.component_args);
+	if (resolution.resolution == "add_component") {
+		var entity = ( resolution.entity ? screen.getEntityByName(resolution.entity) : entity );
+		var component = new TLORMEngine.Components[resolution.component](resolution.component_args);
 		screen.addEntityComponent(entity, component);
 	}
 
-	if (collision.oncollide) {
-		collision.oncollide(entity, hit_entity);
+	if (resolution.oncollide) {
+		resolution.oncollide(entity, hit_entity);
 	}
-	if (hit_collision.oncollide) {
-		hit_collision.oncollide(entity, hit_entity);
-	}
+	//if (hit_collision.oncollide) {
+	//	hit_collision.oncollide(entity, hit_entity);
+	//}
 };
 
 TLORMEngine.Systems.Movement.prototype.deltaMovement = function(value, delta) {

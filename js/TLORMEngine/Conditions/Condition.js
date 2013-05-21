@@ -44,5 +44,7 @@ TLORMEngine.Conditions.Condition.prototype.checkValues = function(check, desired
 		return actual >= desired;
 	} else if (check == "=") {
 		return actual == desired;
+	}else if (check == "!=") {
+		return actual != desired;
 	}
 };
