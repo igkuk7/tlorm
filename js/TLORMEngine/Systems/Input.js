@@ -11,7 +11,7 @@ TLORMEngine.Systems.Input = function(args) {
 	this.touch_click = null;
 	this.last_click_component = {};
 	this.last_touch_component = {};
-	this.key_pressed_threshold = 500;
+	this.key_pressed_threshold = 750;
 }
 // inherit from normal system
 TLORMEngine.Systems.Input.extends(TLORMEngine.Systems.System);

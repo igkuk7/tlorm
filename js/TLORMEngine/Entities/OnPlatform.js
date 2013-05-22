@@ -76,34 +76,39 @@ TLORMEngine.Entities.OnPlatform.prototype.init = function(args) {
 			type: "Position", function: "direction", function_args: [], check: "!=", value: "down",
 		}));
 	}
+	if (!game.condition_manager.getCondition("hit_head")) {
+		game.condition_manager.addCondition(new TLORMEngine.Conditions.Condition({
+			name: "hit_head",
+			type: "Position", function: "direction", function_args: [], check: "=", value: "up",
+		}));
+	}
 
 	// add collision handling
 	this.addComponent(new TLORMEngine.Components.Collision({
 		group: "on_platform", groups: [ "platform" ],
 		resolutions: [
-			{
+			{ // don't stop moving, but don't collide with things
 				resolution: "push"
 			},
-			{
-				resolution: "edit_component", component: "Velocity", 
-				function: "set", function_args: [ null, 0, null ],
-				conditions: [ "is_jumping" ],
+			{ // stop moving when hit wiht head
+				resolution: "stop",
+				conditions: [ "hit_head" ],
 			},
-			{
+			{ // no longer jumping if we have landed
+				resolution: "edit_component", component: "Data", 
+				function: "setData", function_args: [ "jumping", false ],
+				conditions: [ "is_jumping", "has_landed" ],
+			},
+			{ // no longer falling if we have landed
+				resolution: "edit_component", component: "Data", 
+				function: "setData", function_args: [ "falling", false ],
+				conditions: [ "is_falling", "has_landed" ],
+			},
+			{ // landed then standing
 				resolution: "edit_component", component: "Data", 
 				function: "setData", function_args: [ "standing", true ],
 				conditions: [ "not_standing", "has_landed" ],
-			},
-			{
-				resolution: "edit_component", component: "Data", 
-				function: "setData", function_args: [ "standing", false ],
-				conditions: [ "is_standing", "not_landed" ],
-			},
-			{
-				resolution: "edit_component", component: "Data", 
-				function: "setData", function_args: [ "falling", false ],
-				conditions: [ "is_standing", "is_falling" ],
-			},
+			}
 		]
 	}));
 };

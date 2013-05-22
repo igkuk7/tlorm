@@ -13,11 +13,11 @@ TLORMEngine.Entities.PlatformPlayer.prototype.init = function(args) {
 	// inputs for movement and jumping
 	this.addComponent(new TLORMEngine.Components.KeyInput({
 		map: {
-			pressed_38: [
+			pressed_32: [
 				{ type: "Velocity", args: { dy: -40, ay: -5 }, conditions: ["not_jumping", "is_standing"] },
-				{ edit: true, type: "Data", function: "setData", function_args: ["jumping", true ], conditions: ["not_jumping", "is_standing"] },
+				{ edit: true, type: "Data", function: "setData", function_args: ["jumping",  true ],  conditions: ["not_jumping", "is_standing"] },
+				{ edit: true, type: "Data", function: "setData", function_args: ["falling",  true ],  conditions: ["is_jumping"] },
 				{ edit: true, type: "Data", function: "setData", function_args: ["standing", false ], conditions: ["is_jumping"] },
-				{ edit: true, type: "Data", function: "setData", function_args: ["falling", true ], conditions: ["is_jumping"] },
 			],
 			37: [ { type: "Velocity", args: { dx: -5 } } ],
 			39: [ { type: "Velocity", args: { dx: 5 } } ],
