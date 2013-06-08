@@ -2,26 +2,8 @@
 
 TLORMEngine.Components.Velocity = function(args) {
 	args.type = 'Velocity';
-	args.multiple = true;
 	TLORMEngine.Components.Component.call(this, args);
-
-	// set current speeds so we can accelerate if needed
-	this.cdx = this.dx;
-	if (this.ax != null) {
-		this.cdx = 0;
-		this.constant = true;
-	}
-	this.cdy = this.dy;
-	if (this.ay != null) {
-		this.cdy = 0;
-		this.constant = true;
-	}
-	this.cdz = this.dz;
-	if (this.az != null) {
-		this.cdz = 0;
-		this.constant = true;
-	}
-	this.stopped = false;
+	this.checkMax();
 };
 
 // inherit from normal component
@@ -30,12 +12,12 @@ TLORMEngine.Components.Velocity.extends(TLORMEngine.Components.Component);
 TLORMEngine.Components.Velocity.prototype.args_schema = function () {
 	var super_args = this.super.args_schema.call(this);
 	var args =  {
-		dx: { type: "number", default: null },
-		dy: { type: "number", default: null },
+		dx: { type: "number", default: 0 },
+		dy: { type: "number", default: 0 },
 		dz: { type: "number", default: null },
-		ax: { type: "number", default: null },
-		ay: { type: "number", default: null },
-		az: { type: "number", default: null },
+		max_dx: { type: "number", default: null },
+		max_dy: { type: "number", default: null },
+		max_dz: { type: "number", default: null },
 		constant: { type: "boolean", default: false },
 		skip_delta: { type: "boolean", default: false },
 	};
@@ -43,95 +25,97 @@ TLORMEngine.Components.Velocity.prototype.args_schema = function () {
 };
 
 TLORMEngine.Components.Velocity.prototype.getDX = function() {
-	return this.cdx;
+	return this.dx;
 };
 TLORMEngine.Components.Velocity.prototype.getDY = function() {
-	return this.cdy;
+	return this.dy;
 };
 TLORMEngine.Components.Velocity.prototype.getDZ = function() {
-	return this.cdz;
+	return this.dz;
 };
 
-
-TLORMEngine.Components.Velocity.prototype.accelerate = function() {
-	if (this.stopped) {
-		return;	
-	}
-	if (this.ax != null) {
-		this.cdx += this.ax;
-		if ((this.cdx > 0 && this.cdx > this.dx) || (this.cdx < 0 && this.cdx < this.dx)) {
-			this.cdx = this.dx;
-			this.constant = false;
+TLORMEngine.Components.Velocity.prototype.checkMax = function() {
+	if (this.max_dx != null) {
+		if (this.dx > 0 && this.dx > this.max_dx) {
+			this.dx = this.max_dx;
+		} else 
+		if (this.dx < 0 && this.dx < -this.max_dx) {
+			this.dx = -this.max_dx;
 		}
 	}
-	if (this.ay != null) {
-		this.cdy += this.ay;
-		if ((this.cdx > 0 && this.cdy > this.dy) || (this.cdy < 0 && this.cdy < this.dy)) {
-			this.cdy = this.dy;
-			this.constant = false;
+	if (this.max_dy != null) {
+		if (this.dy > 0 && this.dy > this.max_dy) {
+			this.dy = this.max_dy;
+		} else 
+		if (this.dy < 0 && this.dy < -this.max_dy) {
+			this.dy = -this.max_dy;
 		}
 	}
-	if (this.az != null) {
-		this.cdz += this.az;
-		if ((this.cdz > 0 && this.cdz > this.dz) || (this.cdz < 0 && this.cdz < this.dz)) {
-			this.cdz = this.dz;
-			this.constant = false;
+	if (this.max_dz != null) {
+		if (this.dz > 0 && this.dz > this.max_dz) {
+			this.dz = this.max_dz;
+		} else 
+		if (this.dz < 0 && this.dz < -this.max_dz) {
+			this.dz = -this.max_dz;
 		}
 	}
 };
 
 TLORMEngine.Components.Velocity.prototype.change = function(dx, dy, dz) {
-	if (dx) {
-		this.cdx += dx;
+	if (dx != null && dx != undefined) {
+		this.dx += dx;
 	}
-	if (dy) {
-		this.cdy += dy;
+	if (dy != null && dy != undefined) {
+		this.dy += dy;
 	}
-	if (dz) {
-		this.cdz += dz;
+	if (dz != null && dz != undefined) {
+		this.dz += dz;
 	}
+	this.checkMax();
 };
 
 TLORMEngine.Components.Velocity.prototype.increase = function(dx, dy, dz) {
 	if (dx) {
-		if (this.cdx > 0) {
-			this.cdx += dx;
-		} else if (this.cdx < 0) {
-			this.cdx -= dx;
+		if (this.dx > 0) {
+			this.dx += dx;
+		} else if (this.dx < 0) {
+			this.dx -= dx;
 		}
 	}
 	if (dy) {
-		if (this.cdy > 0) {
-			this.cdy += dy;
-		} else if (this.cdy < 0) {
-			this.cdy -= dy;
+		if (this.dy > 0) {
+			this.dy += dy;
+		} else if (this.dy < 0) {
+			this.dy -= dy;
 		}
 	}
 	if (dz) {
-		if (this.cdz > 0) {
-			this.cdz += dz;
-		} else if (this.cdz < 0) {
-			this.cdz -= dz;
+		if (this.dz > 0) {
+			this.dz += dz;
+		} else if (this.dz < 0) {
+			this.dz -= dz;
 		}
 	}
+	this.checkMax();
 };
 
 TLORMEngine.Components.Velocity.prototype.set = function(dx, dy, dz) {
-	if (dx) {
-		this.cdx = dx;
+	if (dx != null && dx != undefined) {
+		this.dx = dx;
 	}
-	if (dy) {
-		this.cdy = dy;
+	if (dy != null && dy != undefined) {
+		this.dy = dy;
 	}
-	if (dz) {
-		this.cdz = dz;
+	if (dz != null && dz != undefined) {
+		this.dz = dz;
 	}
+	this.checkMax();
 };
 
 TLORMEngine.Components.Velocity.prototype.stop = function() {
-	this.cdx = 0;
-	this.cdy = 0;
-	this.cdz = 0;
+	this.dx = 0;
+	this.dy = 0;
+	this.dz = 0;
 	this.stopped = true;
 };
 
@@ -145,4 +129,5 @@ TLORMEngine.Components.Velocity.prototype.setRandom = function(min_x, max_x, min
 	if (min_z && max_z) {
 		this.dz = TLORMEngine.Utils.random_number_in_range(min_z, max_z);
 	}
+	this.checkMax();
 };

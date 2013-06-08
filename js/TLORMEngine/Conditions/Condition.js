@@ -6,6 +6,7 @@ TLORMEngine.Conditions.Condition = function(args) {
 
 TLORMEngine.Conditions.Condition.prototype.args_schema = function () {
 	return {
+		entity: { type: "string", default: "" },
 		type: { type: "string", default: "" },
 		function: { type: "string" },		
 		function_args: { type: "array", default: [] },

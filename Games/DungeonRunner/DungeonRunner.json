@@ -12,7 +12,7 @@
 			"components": [
 				{ "type": "Position", "args": { "x": 0, "y": 0, "w": 800, "h": 600 } },
 				{ "type": "Render2D", "args": { "fill_colour": "#ffffff" } },
-				{ "type": "Dungeon", "args": { "w": 12, "h": 36, "from_random": true } },
+				{ "type": "Dungeon", "args": { "w": 100, "h": 200, "from_random": true } },
 				{ "type": "KeyInput", "args": { "map": {
 					"65": { "name": "Velocity", "args": { "dx": -7 } },
 					"68": { "name": "Velocity", "args": { "dx":  7 } }

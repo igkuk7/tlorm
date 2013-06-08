@@ -292,7 +292,7 @@ TLORMEngine.Screens.Screen.prototype.removeEntityComponentByType = function(enti
 	this.entity_manager.removeEntityComponentByType(entity, type);
 };
 TLORMEngine.Screens.Screen.prototype.check_conditions = function(entity, conditions) {
-	return this.condition_manager.check_conditions(entity, conditions);
+	return this.condition_manager.check_conditions(this, entity, conditions);
 };
 
 TLORMEngine.Screens.Screen.prototype.getContainer = function() {

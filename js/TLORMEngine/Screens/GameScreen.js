@@ -80,11 +80,11 @@ TLORMEngine.Screens.GameScreen.prototype.render = function(game) {
 		this.gl.viewport(0, 0, this.canvas.width, this.canvas.height); 
 		this.gl.clearColor(0, 0, 0, 1);
 		this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
+		this.system_manager.renderAllSystems(this, this.gl);
 	} else {
 		this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+		this.system_manager.renderAllSystems(this, this.context);
 	}
-	
-	this.system_manager.renderAllSystems(this, ( this.webgl ? this.gl : this.context ));
 };
 
 TLORMEngine.Screens.GameScreen.prototype.registerEvent = function(type, callback) {

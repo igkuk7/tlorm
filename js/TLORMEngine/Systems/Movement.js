@@ -28,15 +28,23 @@ TLORMEngine.Systems.Movement.prototype.init = function(screen, reset) {
 }
 
 TLORMEngine.Systems.Movement.prototype.update = function(screen, delta) {
-
-	// accelerate all velocities
-	screen.getAllComponents("Velocity").map(function(v) { v.accelerate(); });
-
-	// apply gravity to all entities which need it prior to movements
-	var entities = screen.getEntitiesByTypes(["Position", "Gravity"]);
+	// apply gravity/friction to all acceleration
+	var entities = screen.getEntitiesByTypes(["Gravity"]);
 	for (var i = 0; i < entities.length; ++i) {
 		this.applyGravity(screen, entities[i], delta);
 	}
+	var entities = screen.getEntitiesByTypes(["Friction", "Acceleration"]);
+	for (var i = 0; i < entities.length; ++i) {
+		this.applyFriction(screen, entities[i], delta);
+	}
+
+	// accelerate velocity
+	var entities = screen.getEntitiesByTypes(["Velocity", "Acceleration"]);
+	for (var i = 0; i < entities.length; ++i) {
+		this.accelerateVelocities(screen, entities[i], delta);
+	}
+
+	// move all entities as needed
 	var entities = screen.getEntitiesByTypes(["Position", "Rotation"]);
 	for (var i = 0; i < entities.length; ++i) {
 		this.rotateEntity(screen, entities[i], delta);
@@ -67,57 +75,55 @@ TLORMEngine.Systems.Movement.prototype.update = function(screen, delta) {
 };
 
 TLORMEngine.Systems.Movement.prototype.applyGravity = function(screen, entity, delta) {
-	var position = entity.getComponentByType("Position");
 	var gravity = entity.getComponentByType("Gravity");
 
-	// if entity has a vertical velocity then adjust that
-	var add_gravity = false;
-	var velocities = entity.getComponentByType("Velocity") || [];
-	if (velocities.length > 0) {
-		add_gravity = true;
-		for (var i = 0; i < velocities.length; ++i) {
-			var velocity = velocities[i];
-			var vdy = velocity.getDY();
-			if (vdy != null || vdy != undefined) {
-				velocity.change(null, gravity.g);
-				vdy = velocity.getDY();
-				add_gravity = false;
-				if (vdy > 0 && vdy > gravity.terminal_velocity) {
-					velocity.set(null, gravity.terminal_velocity);
-				}
-			}
-		}
-	} else {
-		add_gravity = true;
+	// apply gravity to acceleration, creating it if not present
+	var acceleration = entity.getComponentByType("Acceleration");
+	if (!acceleration) {
+		screen.addEntityComponent(entity, new TLORMEngine.Components.Acceleration({ dy: gravity.g }));
+		return;
 	}
 
-	if (add_gravity) {
-		screen.addEntityComponent(entity, new TLORMEngine.Components.Velocity({ dy: 1, constant: true }));
+	// acceleration is present, adjust by gravity
+	if (acceleration.getDY() < gravity.g) {
+		acceleration.change(null, gravity.g);
+	}
+	if (acceleration.getDY() > gravity.g) {
+		acceleration.set(null, gravity.g);
 	}
 };
 
+TLORMEngine.Systems.Movement.prototype.applyFriction = function(screen, entity, delta) {
+	var friction = entity.getComponentByType("Friction");
+	var acceleration = entity.getComponentByType("Acceleration");
+
+	// TODO: not yet working as friction is on platform, so needs collission info
+
+	// apply friction to acceleration
+	var dx = acceleration.getDX();
+	acceleration.change((dx < 0 ? friction.friction : -friction.friction));
+
+	// don't let it move in opposite direction, stop acceleration if it does
+	var new_dx = acceleration.getDX();
+	if ( (dx < 0 && new_dx > 0) || (dx > 0 && new_dx < 0) ) {
+		acceleration.set(0);
+	}
+};
+
+TLORMEngine.Systems.Movement.prototype.accelerateVelocities = function(screen, entity, delta) {
+	var velocity = entity.getComponentByType("Velocity");
+	var acceleration = entity.getComponentByType("Acceleration");
+
+	velocity.change(acceleration.getDX(), acceleration.getDY(), acceleration.getDZ());
+}
+
 TLORMEngine.Systems.Movement.prototype.moveEntity = function(screen, entity, collision_entities, delta) {
 	var position = entity.getComponentByType("Position");
-	var velocities = entity.getComponentByType("Velocity");
+	var velocity = entity.getComponentByType("Velocity");
 
-	// iterate over all velocities to get total movement info
-	var dx = 0;
-	var dy = 0;
-	var dz = 0;
-	for (var i = 0; i < velocities.length; ++i) {
-		var velocity = velocities[i];
-		var vdx = Math.round( velocity.skip_delta ? velocity.getDX() : this.deltaMovement(velocity.getDX(), delta) ) || 0;
-		var vdy = Math.round( velocity.skip_delta ? velocity.getDY() : this.deltaMovement(velocity.getDY(), delta) ) || 0;
-		var vdz = Math.round( velocity.skip_delta ? velocity.getDZ() : this.deltaMovement(velocity.getDZ(), delta) ) || 0;
-		dx += vdx;
-		dy += vdy;
-		dz += vdz;
-
-		// if velocity has 0 movement, then remove it
-		if (!velocity.constant || (vdx==0 && vdy==0 && vdz==0)) {
-			screen.removeEntityComponent(entity, velocity);
-		}
-	}
+	var dx = Math.round( velocity.skip_delta ? velocity.getDX() : this.deltaMovement(velocity.getDX(), delta) ) || 0;
+	var dy = Math.round( velocity.skip_delta ? velocity.getDY() : this.deltaMovement(velocity.getDY(), delta) ) || 0;
+	var dz = Math.round( velocity.skip_delta ? velocity.getDZ() : this.deltaMovement(velocity.getDZ(), delta) ) || 0;
 
 	// if this item can collide them move it a step at a time and check for collisions
 	var collision = entity.getComponentByType("Collision") || [];
@@ -143,12 +149,8 @@ TLORMEngine.Systems.Movement.prototype.moveByIncrements = function(screen, entit
 			}
 
 			// check collisions, and if any found then stop the movements
-			if (this.checkForCollisions(screen, entity, collision_entities) > 0) {
-				if (dx < 0) {
-					position.moveBy(1, 0, 0);
-				} else if (dx > 0) {
-					position.moveBy(-1, 0, 0);
-				}
+			var collision_result = this.checkForCollisions(screen, entity, collision_entities);
+			if (collision_result.stop_movement) {
 				dx = 0;
 			}
 		}
@@ -163,12 +165,8 @@ TLORMEngine.Systems.Movement.prototype.moveByIncrements = function(screen, entit
 			}
 
 			// check collisions, and if any found then stop the movements
-			if (this.checkForCollisions(screen, entity, collision_entities) > 0) {
-				if (dy < 0) {
-					position.moveBy(0, 1, 0);
-				} else if (dy > 0) {
-					position.moveBy(0, -1, 0);
-				}
+			var collision_result = this.checkForCollisions(screen, entity, collision_entities);
+			if (collision_result.stop_movement) {
 				dy = 0;
 			}
 		}
@@ -183,12 +181,8 @@ TLORMEngine.Systems.Movement.prototype.moveByIncrements = function(screen, entit
 			}
 
 			// check collisions, and if any found then stop the movements
-			if (this.checkForCollisions(screen, entity, collision_entities) > 0) {
-				if (dz < 0) {
-					position.moveBy(0, 0, 1);
-				} else if (dz > 0) {
-					position.moveBy(0, 0, -1);
-				}
+			var collision_result = this.checkForCollisions(screen, entity, collision_entities);
+			if (collision_result.stop_movement) {
 				dz = 0;
 			}
 		}
@@ -257,19 +251,33 @@ TLORMEngine.Systems.Movement.prototype.translateEntity = function(screen, entity
 					}
 				}
 			}
-			screen.addEntityComponent(entity, new TLORMEngine.Components.Velocity({ dx: x_speed, dy: y_speed }));
+
+			var velocity = entity.getComponentByType("Velocity");
+			if (velocity) {
+				velocity.set(x_speed, y_speed);
+			} else {
+				screen.addEntityComponent(entity, new TLORMEngine.Components.Velocity({ dx: x_speed, dy: y_speed }));
+			}
 			if (remove) {
 				screen.removeEntityComponent(entity, translations[i]);
 			}
 		} else {
-			screen.addEntityComponent(
-				entity,
-				new TLORMEngine.Components.Velocity({
-					dx: ( dest_x ? dest_x-(translations[i].move_middle ? position.mx : position.x) : null ),
-					dy: ( dest_y ? dest_y-(translations[i].move_middle ? position.my : position.y) : null ),
-					skip_delta: true
-				})
-			);
+			var velocity = entity.getComponentByType("Velocity");
+			if (velocity) {
+				velocity.set(
+					( dest_x ? dest_x-(translations[i].move_middle ? position.mx : position.x) : null ),
+					( dest_y ? dest_y-(translations[i].move_middle ? position.my : position.y) : null )
+				);
+			} else {
+				screen.addEntityComponent(
+					entity,
+					new TLORMEngine.Components.Velocity({
+						dx: ( dest_x ? dest_x-(translations[i].move_middle ? position.mx : position.x) : null ),
+						dy: ( dest_y ? dest_y-(translations[i].move_middle ? position.my : position.y) : null ),
+						skip_delta: true
+					})
+				);
+			}
 			screen.removeEntityComponent(entity, translations[i]);
 		}
 	}
@@ -282,57 +290,83 @@ TLORMEngine.Systems.Movement.prototype.followEntity = function(screen, entity, d
 	if (follow_entity) {
 		var follow_position = follow_entity.getComponentByType("Position");
 		if (follow_position) {
-			var dx = 0;
-			var dy = 0;
-			var dz = 0;
-			if (follow.dx > 0) {
-				var position_x        = position.x;
-				var follow_position_x = follow_position.x;
-				if (follow.move_middle) {
-					position_x        += position.hw;
-					follow_position_x += follow_position.hw;
+			if (follow.fixed) {
+				var new_x = null;
+				if (follow.dx != null) {
+					new_x = follow_position.x+follow.dx;
+					if (follow.invert) {
+						new_x = -new_x;
+					}
 				}
-				var speed_x = Math.min(follow.dx, Math.abs(follow_position_x - position_x));
-				if (follow_position_x < position_x) {
-					dx = -speed_x;
-				} else if (follow_position_x > position_x) {
-					dx = speed_x;
+				var new_y = null;
+				if (follow.dy != null) {
+					new_y = follow_position.y+follow.dy;
+					if (follow.invert) {
+						new_y = -new_y;
+					}
 				}
+				var new_z = null;
+				if (follow.dz != null) {
+					new_z = follow_position.z+follow.dz;
+					if (follow.invert) {
+						new_z = -new_z;
+					}
+				}
+				position.moveTo(new_x, new_y, new_z);
+			} else {
+				var dx = 0;
+				var dy = 0;
+				var dz = 0;
+				if (follow.dx > 0) {
+					var position_x        = position.x;
+					var follow_position_x = follow_position.x;
+					if (follow.move_middle) {
+						position_x        += position.hw;
+						follow_position_x += follow_position.hw;
+					}
+					var speed_x = Math.min(follow.dx, Math.abs(follow_position_x - position_x));
+					if (follow_position_x < position_x) {
+						dx = -speed_x;
+					} else if (follow_position_x > position_x) {
+						dx = speed_x;
+					}
+				}
+				if (follow.dy > 0) {
+					var position_y        = position.y;
+					var follow_position_y = follow_position.y;
+					if (follow.move_middle) {
+						position_y        += position.hh;
+						follow_position_y += follow_position.hh;
+					}
+					var speed_y = Math.min(follow.dy, Math.abs(follow_position_y - position_y));
+					if (follow_position_y < position_y) {
+						dy = -speed_y;
+					} else if (follow_position_y > position_y) {
+						dy = speed_y;
+					}
+				}
+				if (follow.dz > 0) {
+					var position_z        = position.z;
+					var follow_position_z = follow_position.z;
+					if (follow.move_middle) {
+						position_z        += position.hd;
+						follow_position_z += follow_position.hd;
+					}
+					var speed_z = Math.min(follow.z, Math.abs(follow_position_z - position_z));
+					if (follow_position_z < position_z) {
+						dz = -speed_z;
+					} else if (follow_position.z > position_z) {
+						dz = speed_z;
+					}
+				}
+				screen.addEntityComponent(entity, new TLORMEngine.Components.Velocity({ dx: dx, dy: dy, dz: dz }));
 			}
-			if (follow.dy > 0) {
-				var position_y        = position.y;
-				var follow_position_y = follow_position.y;
-				if (follow.move_middle) {
-					position_y        += position.hh;
-					follow_position_y += follow_position.hh;
-				}
-				var speed_y = Math.min(follow.dy, Math.abs(follow_position_y - position_y));
-				if (follow_position_y < position_y) {
-					dy = -speed_y;
-				} else if (follow_position_y > position_y) {
-					dy = speed_y;
-				}
-			}
-			if (follow.dz > 0) {
-				var position_z        = position.z;
-				var follow_position_z = follow_position.z;
-				if (follow.move_middle) {
-					position_z        += position.hd;
-					follow_position_z += follow_position.hd;
-				}
-				var speed_z = Math.min(follow.z, Math.abs(follow_position_z - position_z));
-				if (follow_position_z < position_z) {
-					dz = -speed_z;
-				} else if (follow_position.z > position_z) {
-					dz = speed_z;
-				}
-			}
-			screen.addEntityComponent(entity, new TLORMEngine.Components.Velocity({ dx: dx, dy: dy, dz: dz }));
 		}
 	}
 };
 
 TLORMEngine.Systems.Movement.prototype.checkForCollisions = function(screen, entity, entities) {
+	var result = { stop_movement: false, collided: 0 };
 	var position = entity.getComponentByType("Position");
 	var collisions = entity.getComponentByType("Collision");
 	var collided = 0;
@@ -347,16 +381,19 @@ TLORMEngine.Systems.Movement.prototype.checkForCollisions = function(screen, ent
 				if (check_position.x+check_position.w < position.x) {
 					continue;
 				}
-				if (this.checkCollision(screen, entity, entities[i], collision)) {
-					++collided;
+				var collision_result = this.checkCollision(screen, entity, entities[i], collision);
+				result.collided += collision_result.collided;
+				if (collision_result.stop_movement) {
+					result.stop_movement = true;
 				}
 			}
 		}
 	}
-	return collided;
+	return result;
 };
 
 TLORMEngine.Systems.Movement.prototype.checkCollision = function(screen, entity, check_entity, collision) {
+	var result = { stop_movement: false, collided: 0 };
 	var position = entity.getComponentByType("Position");
 	var check_position = check_entity.getComponentByType("Position");
 	var check_collisions = check_entity.getComponentByType("Collision");
@@ -377,20 +414,25 @@ TLORMEngine.Systems.Movement.prototype.checkCollision = function(screen, entity,
 			}
 			for (var ri=0; ri<resolutions_to_run.length; ++ri) {
 				var resolution = resolutions_to_run[ri];
-				this.collisionResolution(screen, entity, check_entity, collision, check_collision, resolution);
+				var collision_result = this.collisionResolution(screen, entity, check_entity, collision, check_collision, resolution);
+				if (collision_result.stop_movement) {
+					result.stop_movement = true;
+				}
 			}
 
-			++collided;
+			++result.collided;
 		}
 	}
-	return collided;
+	return result;
 };
 
 TLORMEngine.Systems.Movement.prototype.collisionResolution = function(screen, entity, hit_entity, collision, hit_collision, resolution) {
+	var result = { stop_movement: false };
 	var position = entity.getComponentByType("Position");
 	var hit_position = hit_entity.getComponentByType("Position");
+	var velocity = entity.getComponentByType("Velocity");
+	var acceleration = entity.getComponentByType("Acceleration");
 	if (resolution.resolution == "bounce" || resolution.resolution == "destroy_hit_and_bounce") {
-		var velocity = entity.getComponentByType("Velocity")[0];
 		if (velocity) {
 			if (velocity.constant) {
 				switch (position.collisionDirection(hit_position)) {
@@ -407,39 +449,51 @@ TLORMEngine.Systems.Movement.prototype.collisionResolution = function(screen, en
 				}
 			}
 		}
+		result.stop_movement = true;
 	}
 	if (resolution.resolution == "push") {
 		var direction = position.direction();
 		var stop = false;
 
 		// "push" back so no longer colliding, also remove velocity which caused collision
-		var velocities = entity.getComponentByType("Velocity") || [];
+		var dx, dy;
+		if (velocity) {
+			dx = velocity.getDX();
+			dy = velocity.getDY();
+		}
 		while (!stop && position.collides(hit_position)) {
 			switch (direction) {
 				case "up":
 					position.moveBy(0, 1);
-					velocities.filter(function(v){ return v.getDY() && v.getDY() < 0; }).map(function(v) { v.set(null, 0); });
+					if (velocity && dy && dy < 0) { velocity.set(null, 0); }
 					break;
 				case "down":
 					position.moveBy(0, -1);
-					velocities.filter(function(v){ return v.getDY() && v.getDY() > 0; }).map(function(v) { v.set(null, 0); });
+					if (velocity && dy && dy > 0) { velocity.set(null, 0); }
 					break;
 				case "left":
 					position.moveBy(1, 0);
-					velocities.filter(function(v){ return v.getDX() && v.getDX() < 0; }).map(function(v) { v.set(0, null); });
+					if (velocity && dx && dx < 0) { velocity.set(0, null); }
 					break;
 				case "right":
 					position.moveBy(-1, 0);
-					velocities.filter(function(v){ return v.getDX() && v.getDX() > 0; }).map(function(v) { v.set(0, null);  });
+					if (velocity && dx && dx > 0) { velocity.set(0, null); }
 					break;
 				default:
 					stop = true
 					break;
 			}
 		}
+		result.stop_movement = true;
 	}
 	if (resolution.resolution == "stop") {
-		screen.removeEntityComponentByType(entity, "Velocity");
+		if (velocity) {
+			velocity.set(0, 0);
+		}
+		if (acceleration) {
+			acceleration.set(0, 0);
+		}
+		result.stop_movement = true;
 	}
 	if (resolution.resolution == "destroy_hit" || resolution.resolution == "destroy_hit_and_bounce") {
 		screen.removeEntity(hit_entity);
@@ -486,6 +540,8 @@ TLORMEngine.Systems.Movement.prototype.collisionResolution = function(screen, en
 	//if (hit_collision.oncollide) {
 	//	hit_collision.oncollide(entity, hit_entity);
 	//}
+
+	return result;
 };
 
 TLORMEngine.Systems.Movement.prototype.deltaMovement = function(value, delta) {

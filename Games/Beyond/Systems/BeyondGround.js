@@ -14,8 +14,8 @@ TLORMEngine.Systems.BeyondGround = function(args) {
 	this.ground_y_values = {};
 	this.variance = 2;
 	this.speed = 10;
-	this.show_below = 0;
-	this.show_above = 0;
+	this.show_below = 1;
+	this.show_above = 1;
 };
 
 // inherit from normal system

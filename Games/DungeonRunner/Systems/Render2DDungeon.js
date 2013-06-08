@@ -7,7 +7,12 @@ TLORMEngine.Systems.Render2DDungeon = function(args) {
 	this.mouse_pos = null;
 	this.mouse_click = null;
 	this.mouse_wheel = null;
-	this.offset = { x: 0, y: 0 };
+	this.offset = { x: 10, y: 0 };
+	this.gw = 80;
+	this.gh = 40;
+	this.keys_down = {};
+	this.grass_img = new Image();
+				this.grass_img.src = 'grass-texture-2.jpg';
 };
 
 // inherit from normal system
@@ -43,6 +48,15 @@ TLORMEngine.Systems.Render2DDungeon.prototype.init = function(screen, reset) {
 			dir: Math.round(event.wheelDelta / 100)
 		};
 	});
+	screen.registerEvent("keydown", function(event) {
+		self.keys_down[event.keyCode] = true;
+	});
+	screen.registerEvent("keyup", function(event) {
+		delete self.keys_down[event.keyCode];
+	});
+	screen.registerEvent("blur", function(event) {
+		self.keys_down = {};
+	});
 };
 
 TLORMEngine.Systems.Render2DDungeon.prototype.update = function(screen, delta) {
@@ -51,6 +65,28 @@ TLORMEngine.Systems.Render2DDungeon.prototype.update = function(screen, delta) {
 		var dungeon_entities = entities[i].getComponentByType("Dungeon").entitiesToAdd();
 		dungeon_entities.map(function(a) { screen.addEntity(a); });
 	}
+
+var speed = 10;
+		if (this.keys_down[37]) {
+			this.offset.x -= speed
+		} 
+		if (this.keys_down[39]) {
+			this.offset.x += speed;
+		} 
+		 if (this.keys_down[38]) {
+			this.offset.y -= speed;
+		} 
+		 if (this.keys_down[40]) {
+			this.offset.y += speed;
+		} 
+		 if (this.keys_down[88]) {
+			this.gw += 2;
+			this.gh += 1;
+		} 
+		 if (this.keys_down[90]) {
+			this.gw -= 2;
+			this.gh -= 1;
+		} 
 };
 
 TLORMEngine.Systems.Render2DDungeon.prototype.render = function(screen, context) {
@@ -88,7 +124,7 @@ TLORMEngine.Systems.Render2DDungeon.prototype.renderDungeon = function(entity, c
 		}
 	}
 
-	// adjust height of selected items
+	// adjust heithis.ght of selected items
 	if (this.mouse_wheel) {
 		for (var i=0; i<dungeon.w*dungeon.h; ++i) {
 			var grid_info = this.grid[i];
@@ -106,30 +142,28 @@ TLORMEngine.Systems.Render2DDungeon.prototype.renderDungeon = function(entity, c
 
 	context.fillStyle = "#DDD";
 	context.fillRect(position.x, position.y, position.w, position.h);
-
-	var gw = 64;
-	var gh = 32;
-
 	// render y then x to do back to front
+	var count = 0;
 	for (var y=0; y<dungeon.h; ++y) {
 		for (var x=0; x<dungeon.w; ++x) {
 			var grid_info = this.grid[x+y*dungeon.w];
-
+			context.fillStyle = "green";
+			grid_info.h = grid_info.col;
 			switch (grid_info.col) {
 				case 0:
-					context.fillStyle = "red";
+					//context.fillStyle = "red";
 					break;
 				case 1:
-					context.fillStyle = "green";
+					//context.fillStyle = "green";
 					break;
 				case 2:
-					context.fillStyle = "blue";
+					//context.fillStyle = "blue";
 					break;
 				case 3:
-					context.fillStyle = "yellow";
+					//context.fillStyle = "yellow";
 					break;
 				default:
-					context.fillStyle = "black";
+					//context.fillStyle = "black";
 					break;
 			}
 			context.strokeStyle = "black";
@@ -137,70 +171,112 @@ TLORMEngine.Systems.Render2DDungeon.prototype.renderDungeon = function(entity, c
 
 			var xpos, ypos;
 			if (y%2 == 0) {
-				xpos = position.x+(x*gw);
-				ypos = position.y+(y*gh) / 2;
+				xpos = position.x+(x*this.gw);
+				ypos = position.y+(y*this.gh) / 2;
 			} else {
-				xpos = position.x+(x*gw)+(gw/2);
-				ypos = position.y+(y*gh) / 2;
+				xpos = position.x+(x*this.gw)+(this.gw/2);
+				ypos = position.y+(y*this.gh) / 2;
 			}
 			var ypos_original = ypos;
 
-			// base (if no height) 
+			if (   xpos+this.gw < this.offset.x-this.gw
+				|| xpos-this.gw > this.offset.x+position.w
+				|| ypos+this.gh < this.offset.y-this.gh
+				|| ypos-this.gh*grid_info.h > this.offset.y+position.h) {
+				continue;	
+			}
+			++count;
+
+			xpos -= this.offset.x;
+			ypos -= this.offset.y;
+
+			// base (if no heithis.ght) 
 			if (grid_info.h == 0) {
+					//context.save();
+			context.fillStyle = "#005500";
 				context.beginPath();
-				context.moveTo(xpos,        ypos+(gh/2));
-				context.lineTo(xpos+(gw/2), ypos       );
-				context.lineTo(xpos+(gw),   ypos+(gh/2));
-				context.lineTo(xpos+(gw/2), ypos+(gh)  );
-				context.lineTo(xpos,        ypos+(gh/2));
+				context.moveTo(xpos,        ypos+(this.gh/2));
+				context.lineTo(xpos+(this.gw/2), ypos       );
+				context.lineTo(xpos+(this.gw),   ypos+(this.gh/2));
+				context.lineTo(xpos+(this.gw/2), ypos+(this.gh)  );
+				context.lineTo(xpos,        ypos+(this.gh/2));
 				context.fill();
 				context.stroke();
+					//context.clip();
+//context.globalAlpha = 0.35;
+//context.drawImage(this.grass_img, xpos, ypos, this.gw, this.gh);
+//context.restore();
 			}
 
 			// draw height
 			for (var h=0; h<grid_info.h; ++h) {
 				if (h > 0) {
-					ypos -= gh/2;
+					ypos -= this.gh/2;
 				}
 
 				// left face
+					//context.save();
+			context.fillStyle = "#00bb00";
 				context.beginPath();
-				context.moveTo(xpos,        ypos+(gh/2));
+				context.moveTo(xpos,        ypos+(this.gh/2));
 				context.lineTo(xpos,        ypos       );
-				context.lineTo(xpos+(gw/2), ypos+(gh/2));
-				context.lineTo(xpos+(gw/2), ypos+(gh)  );
-				context.lineTo(xpos,        ypos+(gh/2));
+				context.lineTo(xpos+(this.gw/2), ypos+(this.gh/2));
+				context.lineTo(xpos+(this.gw/2), ypos+(this.gh)  );
+				context.lineTo(xpos,        ypos+(this.gh/2));
 				context.fill();
 				context.stroke();
+					//context.clip();
+//context.globalAlpha = 0.35;
+//context.drawImage(this.grass_img, xpos, ypos, this.gw/2, this.gh);
+//context.restore();
 
 				// right face
+					//context.save();
+			context.fillStyle = "#008800";
 				context.beginPath();
-				context.moveTo(xpos+(gw/2), ypos+(gh/2));
-				context.lineTo(xpos+(gw),   ypos       );
-				context.lineTo(xpos+(gw),   ypos+(gh/2));
-				context.lineTo(xpos+(gw/2), ypos+(gh)  );
-				context.lineTo(xpos+(gw/2), ypos+(gh/2));
+				context.moveTo(xpos+(this.gw/2), ypos+(this.gh/2));
+				context.lineTo(xpos+(this.gw),   ypos       );
+				context.lineTo(xpos+(this.gw),   ypos+(this.gh/2));
+				context.lineTo(xpos+(this.gw/2), ypos+(this.gh)  );
+				context.lineTo(xpos+(this.gw/2), ypos+(this.gh/2));
 				context.fill();
 				context.stroke();
+					//context.clip();
+//context.globalAlpha = 0.35;
+//context.drawImage(this.grass_img, xpos+(this.gw/2), ypos, this.gw/2, this.gh);
+//context.restore();
 
 				// top face (only need to draw for the very top)
 				if (h + 1 == grid_info.h) {
+					//context.save();
+			context.fillStyle = "#00ff00";
 					context.beginPath();
 					context.moveTo(xpos,        ypos       );
-					context.lineTo(xpos+(gw/2), ypos-(gh/2));
-					context.lineTo(xpos+(gw),   ypos       );
-					context.lineTo(xpos+(gw/2), ypos+(gh/2));
+					context.lineTo(xpos+(this.gw/2), ypos-(this.gh/2));
+					context.lineTo(xpos+(this.gw),   ypos       );
+					context.lineTo(xpos+(this.gw/2), ypos+(this.gh/2));
 					context.lineTo(xpos,        ypos       );
 					context.fill();
 					context.stroke();
+					//context.clip();
+
+					// context.save();
+     // context.translate(xpos+this.gw/2, ypos);
+//context.rotate(Math.PI / 4); 
+
+//context.drawImage(img, xpos+this.gw/4, ypos-this.gh/4, this.gw/2, this.gh/2);
+
+//context.globalAlpha = 0.35;
+//context.drawImage(this.grass_img, xpos, ypos-this.gh/2, this.gw, this.gh);
+//context.restore();
 				}
 			}
 
 			// hit container
-			var x1 = xpos+(gw/5);
-			var y1 = ypos+(gh/5)-(grid_info.h > 0 ? gh/2 : 0);
-			var x2 = xpos+(4*gw)/5;
-			var y2 = ypos_original+(4*gh)/5;
+			var x1 = xpos+(this.gw/5);
+			var y1 = ypos+(this.gh/5)-(grid_info.h > 0 ? this.gh/2 : 0);
+			var x2 = xpos+(4*this.gw)/5;
+			var y2 = ypos_original+(4*this.gh)/5;
 			//context.strokeRect(x1, y1, x2-x1, y2-y1); 
 
 			// check point is in square container (within the diamond)
@@ -219,6 +295,9 @@ TLORMEngine.Systems.Render2DDungeon.prototype.renderDungeon = function(entity, c
 			}
 		}
 	}
+	console.log(count);
+	context.fillStyle = "black";
+	context.fillText("Count: "+count, 20, 20);
 
 	// render selected items
 	context.strokeStyle = "black";
@@ -231,25 +310,25 @@ TLORMEngine.Systems.Render2DDungeon.prototype.renderDungeon = function(entity, c
 			}
 			var xpos, ypos;
 			if (y%2 == 0) {
-				xpos = position.x+(x*gw);
-				ypos = position.y+(y*gh) / 2;
+				xpos = position.x+(x*this.gw);
+				ypos = position.y+(y*this.gh) / 2;
 			} else {
-				xpos = position.x+(x*gw)+(gw/2);
-				ypos = position.y+(y*gh) / 2;
+				xpos = position.x+(x*this.gw)+(this.gw/2);
+				ypos = position.y+(y*this.gh) / 2;
 			}
 
-			// highlight top most face
-			var top_ypos = ypos - grid_info.h*(gh/2);
+			// hithis.ghlithis.ght top most face
+			var top_ypos = ypos - grid_info.h*(this.gh/2);
 
 			// outline entire size
 			context.beginPath();
-			context.moveTo(xpos,        ypos+(gh/2)    );
-			context.lineTo(xpos+(gw/2), ypos+(gh)      );
-			context.lineTo(xpos+(gw),   ypos+(gh/2)    );
-			context.lineTo(xpos+(gw),   top_ypos+(gh/2));
-			context.lineTo(xpos+(gw/2), top_ypos       );
-			context.lineTo(xpos,        top_ypos+(gh/2));
-			context.lineTo(xpos,        ypos+(gh/2)    );
+			context.moveTo(xpos,        ypos+(this.gh/2)    );
+			context.lineTo(xpos+(this.gw/2), ypos+(this.gh)      );
+			context.lineTo(xpos+(this.gw),   ypos+(this.gh/2)    );
+			context.lineTo(xpos+(this.gw),   top_ypos+(this.gh/2));
+			context.lineTo(xpos+(this.gw/2), top_ypos       );
+			context.lineTo(xpos,        top_ypos+(this.gh/2));
+			context.lineTo(xpos,        ypos+(this.gh/2)    );
 			context.stroke();
 		}
 	}
@@ -257,3 +336,7 @@ TLORMEngine.Systems.Render2DDungeon.prototype.renderDungeon = function(entity, c
 	this.mouse_click = null;
 	this.mouse_wheel = null;
 };
+
+function darken(col, amount) {
+
+}

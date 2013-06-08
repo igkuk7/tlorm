@@ -8,19 +8,27 @@ TLORMEngine.Entities.PlatformPlayer = function(game, args) {
 TLORMEngine.Entities.PlatformPlayer.extends(TLORMEngine.Entities.OnPlatform);
 
 TLORMEngine.Entities.PlatformPlayer.prototype.init = function(args) {
+	args.max_dx = args.max_dx || 10;
 	TLORMEngine.Entities.OnPlatform.prototype.init.call(this, args);
 
 	// inputs for movement and jumping
 	this.addComponent(new TLORMEngine.Components.KeyInput({
 		map: {
 			pressed_32: [
-				{ type: "Velocity", args: { dy: -40, ay: -5 }, conditions: ["not_jumping", "is_standing"] },
+				{ edit: true, type: "Acceleration", function: "set", function_args: [ null, -9 ], conditions: ["not_jumping", "is_standing"] },
 				{ edit: true, type: "Data", function: "setData", function_args: ["jumping",  true ],  conditions: ["not_jumping", "is_standing"] },
-				{ edit: true, type: "Data", function: "setData", function_args: ["falling",  true ],  conditions: ["is_jumping"] },
 				{ edit: true, type: "Data", function: "setData", function_args: ["standing", false ], conditions: ["is_jumping"] },
 			],
-			37: [ { type: "Velocity", args: { dx: -5 } } ],
-			39: [ { type: "Velocity", args: { dx: 5 } } ],
+			37: [ { edit: true, type: "Acceleration", function: "set", function_args: [ -1 ] } ],
+			up_37: [
+				{ edit: true, type: "Acceleration", function: "set", function_args: [ 0 ] },
+				{ edit: true, type: "Velocity", function: "set", function_args: [ 0 ] }
+			],
+			39: [ { edit: true, type: "Acceleration", function: "set", function_args: [  1 ] } ],
+			up_39: [
+				{ edit: true, type: "Acceleration", function: "set", function_args: [ 0 ] },
+				{ edit: true, type: "Velocity", function: "set", function_args: [ 0 ] }
+			],
 		}
 	}));
 }

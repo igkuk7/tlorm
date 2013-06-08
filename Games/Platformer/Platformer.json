@@ -2,24 +2,40 @@
 	"name": "Platformer",
 	"width": 800,
 	"height": 600,
-	"screens": [ { "type": "GameScreen", "name": "Game", "args": { "class": "Game" } } ],
-	"entities": [
+	"screens": [
 		{
-			"name": "Sky",
-			"components": [
-				{ "type": "Position", "args": { "x": 0, "y": 0, "w": 800, "h": 600 } },
-				{ "type": "Render2D", "args": { "fill_colour": "#00CCFF", "z": 1 } }
-			]
-		},
+			"type": "GameScreen", 
+			"name": "Game",
+			"args": {
+				"class": "Game",
+				"move_offset": {
+					"conditions": [ "player_near_top", "player_moving_up" ],
+					"dx": 0,
+					"dy": 10
+				}
+			}
+		}
+	],
+	"entities": [
 		{
 			"name": "Ground",
 			"type": "Platform",
-			"args": { "x": 0, "y": 550, "w": 800, "h": 50, "fill_colour": "#660000", "z": 2 }
+			"args": { "x": 0, "y": 550, "w": 800, "h": 500, "fill_colour": "#660000", "z": 2 }
+		},
+		{
+			"name": "LeftWall",
+			"type": "Platform",
+			"args": { "x": 0, "y": -1000, "w": 10, "h": 2000, "fill_colour": "#660000", "z": 2 }
+		},
+		{
+			"name": "RightWall",
+			"type": "Platform",
+			"args": { "x": 790, "y": -1000, "w": 10, "h": 2000, "fill_colour": "#660000", "z": 2 }
 		},
 		{
 			"name": "Platform 1",
 			"type": "Platform",
-			"args": { "x": 50, "y": 490, "w": 200, "h": 30, "fill_colour": "#660000", "z": 2 }
+			"args": { "x": 10, "y": 490, "w": 240, "h": 30, "fill_colour": "#660000", "z": 2 }
 		},
 		{
 			"name": "Platform 2",
@@ -56,13 +72,67 @@
 			"type": "Platform",
 			"args": {  "x": 300, "y": 70, "w": 200, "h": 30, "fill_colour": "#660000", "z": 2 }
 		},
+		{
+			"name": "Platform 9",
+			"type": "Platform",
+			"args": { "x": 50, "y": 10, "w": 200, "h": 30, "fill_colour": "#660000", "z": 2 }
+		},
+		{
+			"name": "Platform 10",
+			"type": "Platform",
+			"args": { "x": 300, "y": -50, "w": 200, "h": 30, "fill_colour": "#660000", "z": 2 }
+		},
+		{
+			"name": "Platform 11",
+			"type": "Platform",
+			"args": { "x": 550, "y": -110, "w": 200, "h": 30, "fill_colour": "#660000", "z": 2 }
+		},
+		{
+			"name": "Platform 12",
+			"type": "Platform",
+			"args": {  "x": 300, "y": -170, "w": 200, "h": 30, "fill_colour": "#660000", "z": 2 }
+		},
+
+
+		{
+			"name": "Start",
+			"components": [
+				{ "type": "Position", "args": { "x": 20, "y": 420, "w": 40, "h": 70 } },
+				{ "type": "Render2D", "args": { "fill_colour": "#00AA00", "z": 2, "show_name": true } }
+			]
+		},
+		{
+			"name": "End",
+			"components": [
+				{ "type": "Position", "args": { "x": 340, "y": -240, "w": 40, "h": 70 } },
+				{ "type": "Render2D", "args": { "fill_colour": "#0000AA", "z": 2, "show_name": true } }
+			]
+		},
 
 
 		{
 			"name": "Player",
 			"type": "PlatformPlayer",
-			"args": { "x": 20, "y": 300, "w": 20, "h": 50, "fill_colour": "#FF9933", "z": 3 }
+			"args": { "x": 30, "y": 450, "w": 20, "h": 50, "fill_colour": "#FF9933", "z": 3, "max_dx": 5 }
+		},
+
+		{
+			"name": "Camera",
+			"components": [
+				{ "type": "Position", "args": { "x": 0, "y": 0 } },
+				{ "type": "Camera", "args": {} },
+				{ "type": "Follow", "args": { "entity": "Player", "dy": -450, "fixed": true, "invert": true } }
+			]
 		}
 	],
-	"conditions": []
+	"conditions": [
+		{
+			"name": "player_near_top",
+			"args": { "entity": "Player", "type": "Position", "function": "getY", "function_args": [], "check": "<=", "value": 100 }
+		},
+		{
+			"name": "player_moving_up",
+			"args": { "entity": "Player", "type": "Velocity", "function": "getDY", "function_args": [], "check": "<", "value": 0 }
+		}
+	]
 }

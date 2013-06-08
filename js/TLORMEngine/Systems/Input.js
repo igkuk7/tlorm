@@ -4,6 +4,7 @@ TLORMEngine.Systems.Input = function(args) {
 	TLORMEngine.Systems.System.call(this, args);
 
 	this.keys_down = {};
+	this.keys_up = {};
 	this.keys_pressed = {};
 	this.mouse_move = null;
 	this.mouse_click = null;
@@ -56,13 +57,16 @@ TLORMEngine.Systems.Input.prototype.keyDownHandler = function(event) {
 		|| (new Date().getTime() - this.keys_pressed[event.keyCode]) > this.key_pressed_threshold
 	) {
 		this.keys_pressed[event.keyCode] = new Date().getTime();
-		console.log(event.keyCode);
+	}
+	if (this.keys_up[event.keyCode]) {
+		delete this.keys_up[event.keyCode];
 	}
 };
 TLORMEngine.Systems.Input.prototype.keyUpHandler = function(event) {
 	if (this.keys_down[event.keyCode]) {
 		delete this.keys_down[event.keyCode];
 	}
+	this.keys_up[event.keyCode] = true;
 };
 TLORMEngine.Systems.Input.prototype.mouseClickHandler = function(event) {
 	this.mouse_click = event;
@@ -115,10 +119,13 @@ TLORMEngine.Systems.Input.prototype.handleKeyInput = function(screen, entity) {
 				this.handleSingleKeyInput(screen, entity, input.map[key_code]);
 				delete this.keys_pressed[key_code.substring(8)];
 			}
-		} else {
-			if(this.keys_down[key_code]) {
+		} else if (key_code.indexOf("up_") != -1) {
+			if(this.keys_up[key_code.substring(3)]) {
 				this.handleSingleKeyInput(screen, entity, input.map[key_code]);
+				delete this.keys_up[key_code.substring(3)];
 			}
+		} else if (this.keys_down[key_code]) {
+			this.handleSingleKeyInput(screen, entity, input.map[key_code]);
 		}
 	}
 };
@@ -130,7 +137,9 @@ TLORMEngine.Systems.Input.prototype.handleSingleKeyInput = function(screen, enti
 		if (!key_input.conditions || screen.check_conditions(entity, key_input.conditions)) {
 			if (key_input.edit) {
 				var component = entity.getComponentByType(key_input.type);
-				component[key_input.function].apply(component, key_input.function_args);
+				if (component) {
+					component[key_input.function].apply(component, key_input.function_args);
+				}
 			} else if (key_input.new_entity) {
 				var entity_components = key_input.entity.components || [];
 				var components = [];

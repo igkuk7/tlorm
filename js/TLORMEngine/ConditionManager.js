@@ -11,7 +11,7 @@ TLORMEngine.ConditionManager.prototype.getCondition = function(condition) {
 	return this.conditions_by_name[condition] || null;
 };
 
-TLORMEngine.ConditionManager.prototype.check_conditions = function(entity, conditions) {
+TLORMEngine.ConditionManager.prototype.check_conditions = function(screen, entity, conditions) {
 	var expected = conditions.length;
 	var found = 0;
 	for (var i=0; i<conditions.length; ++i) {
@@ -19,7 +19,13 @@ TLORMEngine.ConditionManager.prototype.check_conditions = function(entity, condi
 		if (!condition) {
 			throw "Unknown Condition: "+conditions[i];
 		}
-		if (condition.isTrue(entity)) {
+
+		var entity_to_check = entity;
+		if (!entity_to_check && condition.entity) {
+			entity_to_check = screen.getEntityByName(condition.entity);
+		}
+
+		if (condition.isTrue(entity_to_check)) {
 			++found;
 		}
 	}

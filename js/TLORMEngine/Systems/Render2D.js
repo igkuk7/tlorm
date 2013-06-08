@@ -20,6 +20,18 @@ TLORMEngine.Systems.Render2D.prototype.componentsUsed = function() {
 };
 
 TLORMEngine.Systems.Render2D.prototype.render = function(screen, context) {
+	// check for a camera
+	var cameras = screen.getEntitiesByTypes(["Camera", "Position"]);
+	if (cameras.length > 1) {
+		throw "Can at most one camera";
+	}
+	var camera = cameras[0];
+	if (camera) {
+		var camera_position = camera.getComponentByType("Position");
+		context.save();
+		context.translate(camera_position.x, camera_position.y);
+	}
+
 	// order each loop by z
 	var entities = screen.getEntitiesByTypes(["Render2D", "Position"]);
 	entities.sort( function(a, b) { return a.getComponentByType("Render2D").z - b.getComponentByType("Render2D").z });
@@ -36,6 +48,10 @@ TLORMEngine.Systems.Render2D.prototype.render = function(screen, context) {
 	entities.sort( function(a, b) { return a.getComponentByType("Render2D").z - b.getComponentByType("Render2D").z });
 	for (var i = 0; i < entities.length; ++i) {
 		this.renderParticles(entities[i], context);
+	}
+
+	if (camera) {
+		context.restore();
 	}
 };
 

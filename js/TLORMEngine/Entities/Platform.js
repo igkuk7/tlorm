@@ -15,4 +15,5 @@ TLORMEngine.Entities.Platform.prototype.init = function(args) {
 	this.addComponent(new TLORMEngine.Components.Render2D({ fill_colour: args.fill_colour, z: args.z }));
 	this.addComponent(new TLORMEngine.Components.Render2D({ fill_colour: args.fill_colour, z: args.z }));
 	this.addComponent(new TLORMEngine.Components.Collision({ group: "platform", groups: [] }));
+	this.addComponent(new TLORMEngine.Components.Friction({ friction: 5 }));
 };
