@@ -232,7 +232,9 @@ TLORMEngine.GameFromJSONObject = function(game_settings) {
 		var entity_components = entities[i].components || [];
 		var components = [];
 		for (var j=0; j<entity_components.length; ++j) {
-			components.push(new TLORMEngine.Components[entity_components[j].type](entity_components[j].args || {}));
+			if (TLORMEngine.Components[entity_components[j].type]) {
+				components.push(new TLORMEngine.Components[entity_components[j].type](entity_components[j].args || {}));
+			}
 		}
 
 		var entity_type = entities[i].type || "Entity";

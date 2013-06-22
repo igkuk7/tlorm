@@ -4,7 +4,11 @@
 TLORMEngine.Systems.Render2D = function(args) {
 	args.type = 'Render2D';
 	TLORMEngine.Systems.System.call(this, args);
+
+	// track current screen position for determines whether to render
+	this.position = { x: 0, y: 0, w: 0, h: 0 };
 }
+
 // inherit from normal system
 TLORMEngine.Systems.Render2D.extends(TLORMEngine.Systems.System);
 
@@ -19,24 +23,58 @@ TLORMEngine.Systems.Render2D.prototype.componentsUsed = function() {
 	return components;
 };
 
+TLORMEngine.Systems.Render2D.prototype.moveContextToCamera = function(context, camera) {
+	var camera_position = camera.getComponentByType("Position");
+	context.translate(camera_position.x, camera_position.y);
+	this.position = {
+		x: camera_position.x,    y: camera_position.y,
+		w: context.canvas.width, h: context.canvas.height
+	};
+};
+
+TLORMEngine.Systems.Render2D.prototype.setContextPosition = function(context) {
+	this.position = {
+		x: 0,                    y: 0,
+		w: context.canvas.width, h: context.canvas.height
+	};
+};
+
+
+TLORMEngine.Systems.Render2D.prototype.onScreen = function(position) {
+	if (   this.position.x < position.x+position.w 
+	    || this.position.y < position.h+position.h
+	    || position.x < this.position.x+this.position.w
+	    || position.y < this.position.h+this.position.h
+	) {
+		return true;
+	}
+
+	return false;
+};
+
 TLORMEngine.Systems.Render2D.prototype.render = function(screen, context) {
-	// check for a camera
+	// check for a camera and move context accordingly
 	var cameras = screen.getEntitiesByTypes(["Camera", "Position"]);
 	if (cameras.length > 1) {
-		throw "Can at most one camera";
+		throw "Can have at most one camera";
 	}
 	var camera = cameras[0];
 	if (camera) {
-		var camera_position = camera.getComponentByType("Position");
 		context.save();
-		context.translate(camera_position.x, camera_position.y);
+		this.moveContextToCamera(context, camera);
+	} else {
+		this.setContextPosition(context);
 	}
 
 	// order each loop by z
 	var entities = screen.getEntitiesByTypes(["Render2D", "Position"]);
 	entities.sort( function(a, b) { return a.getComponentByType("Render2D").z - b.getComponentByType("Render2D").z });
+	var count = 0;
 	for (var i = 0; i < entities.length; ++i) {
-		this.renderEntity(entities[i], context);
+		var rendered = this.renderEntity(entities[i], context);
+		if (rendered) {
+			++count;
+		}
 	}
 	
 	var entities = screen.getEntitiesByTypes(["RenderData", "Data"]);
@@ -58,6 +96,10 @@ TLORMEngine.Systems.Render2D.prototype.render = function(screen, context) {
 TLORMEngine.Systems.Render2D.prototype.renderEntity = function(entity, context) {
 	var render = entity.getComponentByType("Render2D");
 	var position = entity.getComponentByType("Position");
+
+	if (!this.onScreen(position)) {
+		return false;
+	}
 
 	if (render.fill_colour) {
 		context.fillStyle = render.fill_colour;
@@ -82,6 +124,8 @@ TLORMEngine.Systems.Render2D.prototype.renderEntity = function(entity, context) 
 		context.fillStyle = "#000";
 		context.fillText(entity.name, position.x, position.y);
 	}
+
+	return true;
 };
 
 

@@ -7,12 +7,14 @@
 			"type": "GameScreen", 
 			"name": "Game",
 			"args": {
-				"class": "Game",
-				"move_offset": {
-					"conditions": [ "player_near_top", "player_moving_up" ],
-					"dx": 0,
-					"dy": 10
-				}
+				"class": "Game"
+			}
+		},
+		{
+			"type": "Screen", 
+			"name": "Game Over",
+			"args": {
+				"class": "GameOver"
 			}
 		}
 	],
@@ -121,7 +123,8 @@
 			"components": [
 				{ "type": "Position", "args": { "x": 0, "y": 0 } },
 				{ "type": "Camera", "args": {} },
-				{ "type": "Follow", "args": { "entity": "Player", "dy": -450, "fixed": true, "invert": true } }
+				{ "type": "Follow2", "args": { "entity": "Player", "dy": -450, "fixed": true, "invert": true } },
+				{ "type": "Velocity", "args": { "dy": 1, "constant": true } }
 			]
 		}
 	],
