@@ -25,7 +25,7 @@ TLORMEngine.ConditionManager.prototype.check_conditions = function(screen, entit
 			entity_to_check = screen.getEntityByName(condition.entity);
 		}
 
-		if (condition.isTrue(entity_to_check)) {
+		if (entity_to_check && condition.isTrue(entity_to_check)) {
 			++found;
 		}
 	}

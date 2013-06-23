@@ -7,7 +7,17 @@
 			"type": "GameScreen", 
 			"name": "Game",
 			"args": {
-				"class": "Game"
+				"class": "Game",
+				"switch_screen": [
+					{ "goto": "Game Won", "conditions": [ "player_reached_end" ] }
+				]
+			}
+		},
+		{
+			"type": "Screen", 
+			"name": "Game Won",
+			"args": {
+				"class": "GameWon"
 			}
 		},
 		{
@@ -107,7 +117,18 @@
 			"name": "End",
 			"components": [
 				{ "type": "Position", "args": { "x": 340, "y": -240, "w": 40, "h": 70 } },
-				{ "type": "Render2D", "args": { "fill_colour": "#0000AA", "z": 2, "show_name": true } }
+				{ "type": "Render2D", "args": { "fill_colour": "#0000AA", "z": 2, "show_name": true } },
+				{ "type": "Data", "args": { "player_touched": false } },
+				{ "type": "Collision", "args": { 
+					"group": "end",
+					"groups": [ "on_platform" ],
+					"resolutions": [
+						{
+							"resolution": "edit_component", "component": "Data", 
+							"function": "setData", "function_args": [ "on_platform", true ]
+						}
+					]
+				} }
 			]
 		},
 
@@ -136,6 +157,10 @@
 		{
 			"name": "player_moving_up",
 			"args": { "entity": "Player", "type": "Velocity", "function": "getDY", "function_args": [], "check": "<", "value": 0 }
+		},
+		{
+			"name": "player_reached_end",
+			"args": { "entity": "End", "type": "Data", "function": "getData", "function_args": [ "player_touched"], "check": "=", "value": true }
 		}
 	]
 }

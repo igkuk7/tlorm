@@ -144,7 +144,8 @@ TLORMEngine.Screens.Screen.prototype.update = function(game, delta) {
 
 TLORMEngine.Screens.Screen.prototype.switchScreens = function() {
 	for (var i=0; i<this.switch_screen.length; ++i) {
-		if (this.conditionsPassed(this.switch_screen[i].conditions)) {
+		// TODO: use condition manager for this
+		if (this.check_conditions(null, this.switch_screen[i].conditions)) {
 			return this.switch_screen[i];
 		}
 	}
