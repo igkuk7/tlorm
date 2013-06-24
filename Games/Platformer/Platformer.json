@@ -18,14 +18,16 @@
 			"type": "Screen", 
 			"name": "Game Won",
 			"args": {
-				"class": "GameWon"
+				"class": "GameWon",
+				"show_back": false
 			}
 		},
 		{
 			"type": "Screen", 
 			"name": "Game Over",
 			"args": {
-				"class": "GameOver"
+				"class": "GameOver",
+				"show_back": false
 			}
 		}
 	],

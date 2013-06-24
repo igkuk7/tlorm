@@ -6,7 +6,7 @@ TLORMEngine.Systems.Render2D = function(args) {
 	TLORMEngine.Systems.System.call(this, args);
 
 	// track current screen position for determines whether to render
-	this.position = { x: 0, y: 0, w: 0, h: 0 };
+	this.position = null;
 }
 
 // inherit from normal system
@@ -27,7 +27,7 @@ TLORMEngine.Systems.Render2D.prototype.moveContextToCamera = function(context, c
 	var camera_position = camera.getComponentByType("Position");
 	context.translate(camera_position.x, camera_position.y);
 	this.position = {
-		x: camera_position.x,    y: camera_position.y,
+		x: camera_position.x,    y: -camera_position.y,
 		w: context.canvas.width, h: context.canvas.height
 	};
 };
@@ -41,15 +41,10 @@ TLORMEngine.Systems.Render2D.prototype.setContextPosition = function(context) {
 
 
 TLORMEngine.Systems.Render2D.prototype.onScreen = function(position) {
-	if (   this.position.x < position.x+position.w 
-	    || this.position.y < position.y+position.h
-	    || position.x < this.position.x+this.position.w
-	    || position.y < this.position.y+this.position.h
-	) {
+	if (this.position == null) {
 		return true;
 	}
-
-	return false;
+	return position.collides(this.position);
 };
 
 TLORMEngine.Systems.Render2D.prototype.render = function(screen, context) {
