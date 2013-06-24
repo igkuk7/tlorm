@@ -41,6 +41,18 @@ TLORMEngine.Utils.get_json = function(url) {
 	return json_contents;
 };
 
+TLORMEngine.Utils.get_xml = function(url) {
+	var contents = null;
+	var xhr = TLORMEngine.Utils.xhr();
+
+	xhr.open("GET", url, false);  
+	xhr.send(null);  
+
+	// synchronous call so will hang until gets response
+	// no need for callback
+	return xhr.responseXML;
+};
+
 TLORMEngine.Utils.error = function(error, fatal) {
 	console.log(error);
 	if (fatal) {
