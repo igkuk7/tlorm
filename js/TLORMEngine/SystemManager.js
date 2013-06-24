@@ -2,6 +2,7 @@ TLORMEngine.SystemManager = function() {
 	this.next_id = 1;
 	this.systems = [];
 	this.systems_by_id = {};
+	this.systems_by_type = {};
 
 	// load all systems
 	for (var system_type in TLORMEngine.Systems) {
@@ -16,10 +17,15 @@ TLORMEngine.SystemManager = function() {
 	this.always_active_systems = {};
 };
 
+TLORMEngine.SystemManager.prototype.getSystemByType = function(type) {
+	return this.systems_by_type[type];
+};
+
 TLORMEngine.SystemManager.prototype.addSystem = function(system) {
 	system.id = this.next_id++;
 	this.systems.push(system);
 	this.systems_by_id[system.id] = system;
+	this.systems_by_type[system.type] = system;
 };
 
 TLORMEngine.SystemManager.prototype.initAllSystems = function(screen, reset) {

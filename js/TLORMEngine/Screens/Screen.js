@@ -303,3 +303,8 @@ TLORMEngine.Screens.Screen.prototype.getContainer = function() {
 TLORMEngine.Screens.Screen.prototype.getOption = function(option) {
 	return this.game.getOption(option);
 };
+
+TLORMEngine.Screens.Screen.prototype.getSystemByType = function(type) {
+	// no system in base screen, return nothing
+	return null;
+};

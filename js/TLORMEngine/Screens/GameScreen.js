@@ -97,7 +97,7 @@ TLORMEngine.Screens.GameScreen.prototype.registerEvent = function(type, callback
 	this.events[type].push(callback);
 };
 
-TLORMEngine.Screens.Screen.prototype.clearAllRegisteredEvents = function() {
+TLORMEngine.Screens.GameScreen.prototype.clearAllRegisteredEvents = function() {
 	for (var type in this.events) {
 		for (var i=0; i<this.events[type].length; ++i) {
 			if (type.indexOf('key') == -1) {
@@ -107,4 +107,8 @@ TLORMEngine.Screens.Screen.prototype.clearAllRegisteredEvents = function() {
 			}
 		}
 	}
+};
+
+TLORMEngine.Screens.GameScreen.prototype.getSystemByType = function(type) {
+	return this.system_manager.getSystemByType(type);
 };

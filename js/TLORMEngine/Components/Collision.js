@@ -46,6 +46,19 @@ TLORMEngine.Components.Collision.prototype.resolutions = [
 	"stop", "bounce", "push", "destroy", "destroy_hit", "destroy_both", "destroy_hit_and_bounce", "edit_component", "add_component"
 ];
 
+
+TLORMEngine.Components.Collision.prototype.hasGroups = function() {
+	if (this.groups.toString() == "no_groups") {
+		return false;
+	}
+
+	if (this.groups.length > 0) {
+		return true;
+	}
+
+	return false;
+};
+
 TLORMEngine.Components.Collision.prototype.collides = function(collision) {
 	if (this.groups.toString() == "no_groups") {
 		return false;

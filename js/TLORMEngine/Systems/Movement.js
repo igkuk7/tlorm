@@ -72,6 +72,22 @@ TLORMEngine.Systems.Movement.prototype.update = function(screen, delta) {
 	for (var i = 0; i < entities.length; ++i) {
 		this.moveEntity(screen, entities[i], collision_entities, delta);
 	}
+
+	// finally check any collision entities without velocity
+	// e.g. checking if a play has move into a static area
+	for (var i = 0; i < collision_entities.length; ++i) {
+		var collisions = collision_entities[i].getComponentByType("Collision");
+		var has_groups = false;
+		for (var j=0; j<collisions.length; ++j) {
+			if (collisions[j].hasGroups()) {
+				has_groups = true;
+				break;
+			}
+		}
+		if (has_groups && !collision_entities[i].getComponentByType("Velocity")) {
+			this.checkForCollisions(screen, collision_entities[i], collision_entities);
+		}
+	}
 };
 
 TLORMEngine.Systems.Movement.prototype.applyGravity = function(screen, entity, delta) {

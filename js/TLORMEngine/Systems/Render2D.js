@@ -42,9 +42,9 @@ TLORMEngine.Systems.Render2D.prototype.setContextPosition = function(context) {
 
 TLORMEngine.Systems.Render2D.prototype.onScreen = function(position) {
 	if (   this.position.x < position.x+position.w 
-	    || this.position.y < position.h+position.h
+	    || this.position.y < position.y+position.h
 	    || position.x < this.position.x+this.position.w
-	    || position.y < this.position.h+this.position.h
+	    || position.y < this.position.y+this.position.h
 	) {
 		return true;
 	}

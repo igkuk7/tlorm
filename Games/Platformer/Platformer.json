@@ -9,7 +9,8 @@
 			"args": {
 				"class": "Game",
 				"switch_screen": [
-					{ "goto": "Game Won", "conditions": [ "player_reached_end" ] }
+					{ "goto": "Game Won", "conditions": [ "player_reached_end" ] },
+					{ "goto": "Game Over", "conditions": [ "player_not_on_screen" ] }
 				]
 			}
 		},
@@ -125,7 +126,7 @@
 					"resolutions": [
 						{
 							"resolution": "edit_component", "component": "Data", 
-							"function": "setData", "function_args": [ "on_platform", true ]
+							"function": "setData", "function_args": [ "player_touched", true ]
 						}
 					]
 				} }
@@ -161,6 +162,11 @@
 		{
 			"name": "player_reached_end",
 			"args": { "entity": "End", "type": "Data", "function": "getData", "function_args": [ "player_touched"], "check": "=", "value": true }
+		},
+		{
+			"name": "player_not_on_screen",
+			"type": "OnScreen",
+			"args": { "entity": "Player", "negate": true }
 		}
 	]
 }

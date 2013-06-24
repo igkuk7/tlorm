@@ -222,7 +222,8 @@ TLORMEngine.GameFromJSONObject = function(game_settings) {
 	for (var i=0; i<conditions.length; ++i) {
 		var args = conditions[i].args || {};
 		args.name = conditions[i].name;
-		var condition = new TLORMEngine.Conditions.Condition(args);
+		var condition_type = conditions[i].type || "Condition";
+		var condition = new TLORMEngine.Conditions[condition_type](args);
 		game.condition_manager.addCondition(condition);
 	}
 	
